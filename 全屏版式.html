@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全屏随机视频-山雾秋</title>
+    <style>
+        /* TikTok风格伪全屏布局 */
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #videoContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        video {
+            max-width: 100%;
+            /* 最大宽度为100% */
+            max-height: 100%;
+            /* 最大高度为100% */
+            object-fit: contain;
+            /* 保持视频比例 */
+        }
+
+        /* 底部推荐按钮区域 */
+        #buttons {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        #buttons button {
+            background: rgba(255, 255, 255, 0.3);
+            /* 半透明效果 */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+            /* 添加背景模糊效果 */
+        }
+
+        /* 切换下一个视频按钮 */
+        #nextVideoButton {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        #topText,
+        #bottomText {
+            position: absolute;
+            width: 100%;
+            color: white;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #topText {
+            top: 20px;
+            cursor: pointer;
+        }
+
+        #bottomText {
+            bottom: 70px;
+        }
+
+        .videoButton {
+            transition: background-color 0.3s;
+            background: rgba(255, 255, 255, 0.3);
+            /* 初始化背景颜色 */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .videoButton.selected {
+            animation: changeBackground 1.5s infinite alternate;
+        }
+
+        @keyframes changeBackground {
+            0% {
+                background-color: rgba(45, 199, 86, 0.556);
+            }
+
+            50% {
+                background-color: rgba(51, 160, 197, 0.556);
+            }
+
+            100% {
+                background-color: rgba(70, 62, 188, 0.671);
+            }
+        }
+
+        #loadingAnimation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 5px solid rgba(255, 255, 255, 0.2);
+            /* 浅色边框 */
+            border-radius: 50%;
+            border-top: 5px solid white;
+            /* 顶部边框为白色 */
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            /* 无限循环旋转动画 */
+        }
+
+        @keyframes spin {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+
+        #loveEffect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+        }
+
+        .heart {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: red;
+            animation: loveEffect 1s ease-out;
+            border-radius: 50%;
+            transform: rotate(-45deg);
+            transform-origin: 0 100%;
+            opacity: 0;
+        }
+
+        .heart:before,
+        .heart:after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: red;
+            border-radius: 50%;
+            top: 0;
+            left: 0;
+        }
+
+        .heart:before {
+            top: -10px;
+            left: 0;
+        }
+
+        .heart:after {
+            top: 0;
+            left: 10px;
+        }
+
+        /* 定义不同大小的爱心 */
+        .small {
+            width: 10px;
+            height: 10px;
+        }
+
+        .medium {
+            width: 20px;
+            height: 20px;
+        }
+
+        .large {
+            width: 30px;
+            height: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="videoContainer">
+        <!-- 视频播放区域 -->
+        <video id="player" autoplay loop></video>
+
+        <!-- 顶部文本（如用户名称）点击刷新页面 -->
+        <div id="topText">随机视频</div>
+        <!-- 加载动画 -->
+        <div id="loadingAnimation" style="display: none;">
+            <div></div> <!-- 这里可以是任何旋转动画的HTML结构，例如使用一个旋转的div -->
+        </div>
+
+        <!-- 点击特效 -->
+        <div id="loveEffect" style="display: none;"></div>
+        <!-- 推荐类型的按钮 -->
+        <div id="buttons">
+            <button id="tianmeiButton" class="videoButton">甜妹</button>
+            <button id="qingchunButton" class="videoButton">清纯</button>
+            <button id="jiqingButton" class="videoButton">激情</button>
+        </div>
+
+        <!-- 电脑屏幕下的“切换下一个视频”按钮 -->
+        <button id="nextVideoButton">切换下一个视频</button>
+    </div>
+
+    <script>
+        // 初始化视频源
+        var player = document.getElementById('player');
+        var currentAPI = 'http://api.yujn.cn/api/tianmei.php?type=video';
+        var api1 = 'http://api.yujn.cn/api/tianmei.php?type=video';
+        var api2 = 'https://tucdn.wpon.cn/api-girl/index.php?wpon=302';
+        var api3 = 'http://api.yujn.cn/api/wmsc.php?type=video';
+        var apiList = [api1, api2, api3]; // 视频API列表
+
+        // 加载视频
+        function loadVideo(api) {
+            document.getElementById('loadingAnimation').style.display = 'block'; // 显示加载动画
+
+            // 设置视频源
+            player.src = api + '&t=' + Math.random();
+
+            // 监听视频加载完成事件
+            player.onloadedmetadata = function () {
+                // 视频加载完成后隐藏加载动画
+                document.getElementById('loadingAnimation').style.display = 'none';
+                player.play();
+            };
+        }
+        // 加载初始视频
+        loadVideo(api1);
+
+        // 甜妹按钮
+        document.getElementById('tianmeiButton').addEventListener('click', function () {
+            loadVideo(api1);
+        });
+
+        // 清纯按钮
+        document.getElementById('qingchunButton').addEventListener('click', function () {
+            loadVideo(api2);
+        });
+
+        // 激情按钮
+        document.getElementById('jiqingButton').addEventListener('click', function () {
+            loadVideo(api3);
+        });
+
+        // 点击"随机视频"刷新页面
+        document.getElementById('topText').addEventListener('click', function () {
+            window.location.reload(); // 刷新页面
+        });
+
+        // 添加变量以防止事件冲突
+        var isScrolling = false; // 用于检测是否在滑动中
+        var doubleClick = false; // 双击状态
+
+        // 触摸事件处理，用于检测滑动方向（移动设备）
+        var touchStartY = 0;
+        var touchEndY = 0;
+        var threshold = 100; // 设置阈值
+
+        player.addEventListener('touchstart', function (e) {
+            touchStartY = e.changedTouches[0].screenY;
+            isScrolling = false; // 开始触摸时重置滑动状态
+        });
+
+        player.addEventListener('touchmove', function (e) {
+            touchEndY = e.changedTouches[0].screenY;
+            isScrolling = true; // 触摸移动时设置滑动状态
+        });
+
+        player.addEventListener('touchend', function () {
+            if (isScrolling) { // 如果正在滑动
+                const distance = touchStartY - touchEndY;
+                if (distance > threshold) {
+                    // 向上滑动，播放下一个视频
+                    loadVideo(api3);
+                } else if (distance < -threshold) {
+                    // 向下滑动，播放上一个视频
+                    loadVideo(api1);
+                }
+            }
+        });
+
+        // 检测是否为电脑屏幕并显示“切换下一个视频”按钮
+        function isDesktop() {
+            return window.innerWidth > 800; // 假设宽度大于800px的设备是电脑屏幕
+        }
+
+        if (isDesktop()) {
+            document.getElementById('nextVideoButton').style.display = 'block'; // 显示按钮
+        }
+
+        // 电脑屏幕上点击“切换下一个视频”按钮时，切换到下一个视频
+        document.getElementById('nextVideoButton').addEventListener('click', function () {
+            loadVideo(api3);
+        });
+        // 切换视频按钮点击事件处理
+        document.querySelectorAll('.videoButton').forEach(button => {
+            button.addEventListener('click', function () {
+                // 移除其他按钮的选中状态
+                document.querySelectorAll('.videoButton.selected').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+
+                // 加载对应视频
+                const api = this.id === 'tianmeiButton' ? api1 :
+                    this.id === 'qingchunButton' ? api2 : api3;
+                loadVideo(api);
+
+                // 添加选中状态
+                this.classList.add('selected');
+            });
+        });
+
+        // 双击视频显示爱心特效
+        player.addEventListener('dblclick', function (e) {
+            if (doubleClick) {
+                return; // 如果已经是双击状态，则不执行
+            }
+            doubleClick = true;
+
+            // 创建爱心特效
+            const sizes = [20, 30, 40]; // 爱心大小数组
+            sizes.forEach(size => {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.style.width = `${size}px`;
+                heart.style.height = `${size}px`;
+                heart.style.left = `${e.clientX - size / 2}px`;
+                heart.style.top = `${e.clientY - size / 2}px`;
+                heart.style.animationDuration = `${Math.random() * 2 + 1}s`; // 随机动画时间
+                heart.style.animationDelay = `-${Math.random() * 1}s`; // 随机延迟时间
+                heart.style.animationIterationCount = `${Math.floor(Math.random() * 3) + 1}`; // 随机迭代次数
+                document.getElementById('loveEffect').appendChild(heart); // 将爱心添加到loveEffect
+
+                // 动画结束后移除特效
+                heart.addEventListener('animationend', function () {
+                    heart.remove();
+                }, { once: true });
+            });
+
+            // 重置双击状态
+            setTimeout(() => {
+                doubleClick = false;
+            }, 300);
+        });
+
+        // 防止单击事件触发双击特效
+        player.addEventListener('click', () => {
+            if (doubleClick) {
+                doubleClick = false;
+            } else if (!isScrolling) { // 如果没有滑动
+                // 这里可以添加单击事件处理，例如播放/暂停视频等
+            }
+        });
+    </script>
+
+</body>
+
+</html>

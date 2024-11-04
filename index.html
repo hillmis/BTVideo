@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <title>赏颜悦色</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+</head>
+
+<body>
+  <a href="http://liu13.fun" style="text-align: center; color: #2e9c79;"> © 山雾秋</a>
+
+  <section id="main" style="padding: 20px;">
+    <video id="player" controls="controls"></video>
+  </section>
+
+  <div style="text-align: center; bottom: 100px; width: 100%;margin-bottom: 25px;">
+    <section id="buttons">
+      <button id="switch">连续: 开</button>
+      <button id="next1">下一个</button>
+      <button id="apiToggle">换类型</button>
+    </section>
+  </div>
+
+  <div style="text-align: center; bottom: 100px; width: 100%;margin-bottom: 25px;">
+    <button id="copylink">分享网站</button>
+    <button id="kaishiyangsheng">开始养生</button>
+    <button id="codesource">网站源码</button>
+  </div>
+
+  <div style="text-align: center; bottom: 100px; width: 100%;margin-bottom: 25px;">
+    <button id="author" onclick="window.location.href='http://liu13.fun';">站长</button>
+    <button id="donate" onclick="window.location.href='https://link3.cc/liu13';">打赏</button>
+    <button id="announcement">公告</button>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>赏颜悦色</h3>
+      <p>非常简洁好看的单页代码，直接上传即可使用，无需数据库支持。</p>
+    </div>
+  </div>
+  <!访问统计>
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <div class="stats-container"
+      style="display: flex; justify-content: space-between; position: fixed; bottom: 0; width: 100%; padding: 10px; box-sizing: border-box; background-color: rgba(255, 255, 255, 0); border-top: 0 solid #ddd;">
+      <div class="stat-item" style="flex: 1; text-align: center;">
+        <span id="busuanzi_value_site_uv" style="color: rgb(92, 60, 236); font-size: 14px; font-weight: bold;"><span
+            id="busuanzi_value_site_uv"></span></span>
+        <div style="color: rgb(51, 51, 51); font-size: 11px;">访客数量</div>
+      </div>
+      <div class="stat-item" style="flex: 1; text-align: center;">
+        <span id="busuanzi_container_site_pv"
+          style="color: rgb(192, 127, 21); font-size: 14px; font-weight: bold;"><span
+            id="busuanzi_value_site_pv"></span></span>
+        <div style="color: rgb(51, 51, 51); font-size: 11px;">总浏览量</div>
+      </div>
+      <div class="stat-item" style="flex: 1; text-align: center;">
+        <span style="color: rgb(92, 60, 236); font-size: 14px; font-weight: bold;"><span id="days">0</span></span>
+        <div style="color: rgb(51, 51, 51); font-size: 11px;">运行天数</div>
+      </div>
+      <script>
+        // 设置网站上线日期
+        var startDate = new Date('2024/8/27'); // 请替换为您网站的实际上线日期
+
+        // 获取当前日期
+        var currentDate = new Date();
+
+        // 计算两个日期之间的天数差
+        var diffTime = Math.abs(currentDate - startDate);
+        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // 将天数显示到网页上
+        document.getElementById('days').innerHTML = diffDays;
+      </script>
+      <script>
+        var startDate = new Date('2024/8/27');
+        var currentDate = new Date();
+        var diffTime = Math.abs(currentDate - startDate);
+        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        document.getElementById('days').innerHTML = diffDays;
+
+        (function (window, document) {
+          if (top != self) {
+            window.top.location.replace(self.location.href);
+          }
+
+          var get = function (id) { return document.getElementById(id); }
+          var bind = function (element, event, callback) { return element.addEventListener(event, callback); }
+
+          var auto = true;
+          var player = get('player');
+          var api1 = 'http://api.yujn.cn/api/tianmei.php?type=video';
+          var api2 = 'https://tucdn.wpon.cn/api-girl/index.php?wpon=302';
+          var api3 = 'http://api.yujn.cn/api/wmsc.php?type=video';
+
+          window.onload = function () {
+            currentAPI = api1;
+            randomm();
+          };
+          const apiToggle = document.getElementById('apiToggle');
+
+          bind(apiToggle, 'click', function () {
+            if (currentAPI === api1) {
+              currentAPI = api2;
+              apiToggle.innerText = '反差';
+            } else if (currentAPI === api2) {
+              currentAPI = api3;
+              apiToggle.innerText = '甜妹';
+            } else {
+              currentAPI = api1;
+              apiToggle.innerText = '激情';
+            }
+
+            randomm();
+          });
+
+          var randomm = function () {
+            player.src = currentAPI + '&t=' + Math.random();
+            player.play();
+          }
+
+          bind(get('kaishiyangsheng'), 'click', function () {
+            if (player.paused) {
+              player.play();
+              this.innerText = '暂停';
+            } else {
+              player.pause();
+              this.innerText = '播放';
+            }
+          });
+
+          bind(get('next1'), 'click', randomm);
+
+          bind(player, 'error', function () { randomm(); });
+
+          bind(get('switch'), 'click', function () {
+            auto = !auto;
+            this.innerText = '连续: ' + (auto ? '开' : '关');
+          });
+
+          bind(player, 'ended', function () {
+            if (auto) randomm();
+          });
+
+          bind(get('apiToggle'), 'click', function () {
+            currentAPI = currentAPI === api1 ? api2 : (currentAPI === api2 ? api3 : api1);
+            randomm();
+          });
+
+          var modal = get("modal");
+          bind(get('announcement'), 'click', function () { modal.style.display = "block"; });
+          bind(modal.getElementsByClassName("close")[0], 'click', function () { modal.style.display = "none"; });
+          window.onclick = function (event) {
+            if (event.target == modal) modal.style.display = "none";
+          }
+
+          bind(get('copylink'), 'click', function () {
+            var tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = window.location.href;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            alert('网站链接已复制到剪贴板！');
+          });
+
+        })(window, document);
+      </script>
+
+      <style>
+        body {
+          font-family: "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+          margin: 0;
+          background-image: linear-gradient(135deg, #5a2eb3bd 10%, #a952e8 100%);
+          background-size: 800px 800px;
+        }
+
+        #main {
+          display: flex;
+          justify-content: center;
+          /* 水平居中 */
+        }
+
+        #player {
+          width: auto;
+          height: 400px;
+          border-radius: 1rem;
+          box-shadow: 0 0 1rem rgba(53, 169, 204, 0.5);
+        }
+
+        #buttons button,
+        #author,
+        #donate,
+        #announcement,
+        #copylink,
+        #kaishiyangsheng,
+        #codesource {
+          background: linear-gradient(-20deg, #5d70eb98 0%, #78bcec9c 100%);
+          color: #fdfefff6;
+          line-height: 40px;
+          text-align: center;
+          width: 80px;
+          border: none;
+          margin: 0 6px;
+          border-radius: 45px;
+          font-weight: bold;
+          cursor: pointer;
+        }
+
+        .modal {
+          display: none;
+          position: fixed;
+          z-index: 9999;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(1, 0, 0, 0.5);
+        }
+
+        .modal-content {
+          background-color: #fefefe;
+          margin: 15% auto;
+          padding: 20px;
+          border: 1px solid #777ec3;
+          width: 80%;
+          max-width: 600px;
+          border-radius: 10px;
+        }
+
+        .close {
+          color: #777ec3;
+          float: right;
+          font-size: 28px;
+          font-weight: bold;
+          cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+          color: black;
+          text-decoration: none;
+        }
+      </style>
+</body>
+
+</html>

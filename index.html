@@ -35865,7 +35865,7 @@
                     let currentOption = get('option' + i);
 
                     // 检查当前选项是否是正确答案
-                    const isCorrectOption = currentOption.innerText === currentQuestion.options[currentQuestion.correct_option - 1];
+                    const isCorrectOption = currentOption.innerText === currentQuestion.options[currentQuestion.correct_option];
 
                     if (isCorrectOption) {
                         currentOption.classList.add('correct');  // 正确选项变绿色

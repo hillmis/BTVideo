@@ -15,7 +15,7 @@
                 background-image:
                     linear-gradient(135deg, #7350b8bd 10%, #3a7ec7ac 100%),
                     /* 默认的渐变背景 */
-                    url('bg.jpg');
+                    url('bg1.jpg');
                 /* 你的背景图片 */
                 background-size: cover;
                 /* 背景图片适应整个屏幕 */
@@ -35757,6 +35757,7 @@
 
             ];
 
+
             var currentQuestionIndex = 0;
             var score = 0;
             var isVideoMode = true;
@@ -35817,7 +35818,7 @@
             function loadNextQuestion() {
                 // 如果没有剩余的题目，重新打乱题目集
                 if (shuffledQuestions.length === 0) {
-                    shuffledQuestions = shuffleArray([...questions[currentQuestionIndex]]);
+                    shuffledQuestions = shuffleArray([...questions[currentQuestionSetIndex]]);
                 }
 
                 currentQuestion = shuffledQuestions.pop();  // 随机获取下一个题目
@@ -35828,7 +35829,7 @@
                 // 将选项和正确答案一起打乱
                 const optionsWithCorrectAnswer = currentQuestion.options.map((option, index) => ({
                     text: option,  // 选项文本
-                    isCorrect: index === currentQuestion.correct_option  // 标记是否是正确答案
+                    isCorrect: index === currentQuestion.correct_option - 1  // 标记是否是正确答案
                 }));
 
                 // 打乱选项和正确答案的位置
@@ -35864,7 +35865,7 @@
                     let currentOption = get('option' + i);
 
                     // 检查当前选项是否是正确答案
-                    const isCorrectOption = currentOption.innerText === currentQuestion.options[currentQuestion.correct_option];
+                    const isCorrectOption = currentOption.innerText === currentQuestion.options[currentQuestion.correct_option - 1];
 
                     if (isCorrectOption) {
                         currentOption.classList.add('correct');  // 正确选项变绿色
@@ -35877,8 +35878,6 @@
 
                 // 3. 显示单词的含义
                 get('meaning').style.display = 'block';
-                option.disabled = true;  // 禁用所有选项，防止多次点击
-
             }
 
             // 假设当前积分和总积分初始为 0
@@ -35925,7 +35924,7 @@
                     get('apiToggle').innerText = `类型：${apiType}`;
                 } else {
                     // 单词模式: 更新词库按钮文本
-                    const wordSet = currentQuestionSetIndex === questions(0) ? '高中' : currentQuestionSetIndex === questions(1) ? '四级' : '六级';
+                    const wordSet = currentQuestionSetIndex === 0 ? '高中' : currentQuestionSetIndex === 1 ? '四级' : '六级';
                     get('apiToggle').innerText = `词库：${wordSet}`;
                 }
             }
@@ -36099,87 +36098,54 @@
                 player.pause();  // 暂停播放
                 clearTimeout(videoPlayTimer);  // 新增：清除计时器，避免重复计时
             }
-            // 获取模态框元素
-            const modal = document.getElementById("modal");
-            const closeModalButton = document.querySelector(".modal .close");
-
-            // Show the modal
-            closeModalButton.onclick = function () {
-                modal.style.display = "block";
+            //弹幕功能
+            function openDanmakuWindow() {
+                get('danmaku-window').style.display = "block";
             }
-            // 点击关闭按钮关闭模态框
-            closeModalButton.onclick = function () {
-                modal.style.display = "none";
-            };
-
-            // 点击窗口外部关闭模态框
-            window.onclick = function (event) {
-                if (event.target == modal) {
-                    modal.style.display = "none";
-                }
-            };
-
-            // Open and close modal functionality
-            const wordSearchModal = document.getElementById("wordSearchModal");
-            const searchWordButton = document.getElementById("searchWord");
-            const closeModal = document.querySelector(".modal .close");
-
-            // Show the modal
-            searchWordButton.onclick = function () {
-                wordSearchModal.style.display = "block";
-            }
-
-            // Close modal when clicking the close button
-            closeModal.onclick = function () {
-                wordSearchModal.style.display = "none";
-            }
-
-            // Close modal when clicking outside of the modal content
-            window.onclick = function (event) {
-                if (event.target == wordSearchModal) {
-                    wordSearchModal.style.display = "none";
-                }
-            }
-
-            // 处理查词的 API 调用
-            document.getElementById("searchBtn").addEventListener("click", function () {
-                const query = document.getElementById("searchInput").value.trim();  // 去除输入前后的空格
-                const resultElement = document.getElementById("searchResult");
-                const loadingMessage = document.getElementById("loadingMessage");
-
-                if (query) {
-                    // 显示“加载中”消息
-                    loadingMessage.style.display = "block";
-                    resultElement.innerText = "";  // 清除之前的查询结果
-
-                    // 发起 API 调用
-                    fetch(`http://dict.youdao.com/suggest?q=${query}&num=1&doctype=json`)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('网络响应错误');
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            loadingMessage.style.display = "none";  // 隐藏“加载中”消息
-
-                            // 根据 API 返回结构，检查是否有词条信息
-                            if (data && data.result && data.result.code === 200 && data.data && data.data.entries.length > 0) {
-                                const wordData = data.data.entries[0];  // 获取第一个词条
-                                resultElement.innerText = `单词: ${wordData.entry}\n释义: ${wordData.explain}`;
-                            } else {
-                                resultElement.innerText = "未找到该单词的释义。";
-                            }
-                        })
-                        .catch(error => {
-                            loadingMessage.style.display = "none";  // 隐藏“加载中”消息
-                            resultElement.innerText = "查询失败，请稍后再试。";
-                            console.error('Fetch error:', error);
-                        });
-                } else {
-                    resultElement.innerText = "请输入要查询的单词。";
+            bind(get('danmaku-window').getElementsByClassName("close")[0], 'click', function () {
+                get('danmaku-window').style.display = "none";
+            });
+            bind(get('send-danmaku'), 'click', function () {
+                const danmakuContent = get('danmaku-input').value;
+                const color = get('color-picker').value;
+                if (danmakuContent) {
+                    createDanmaku(danmakuContent, color);
+                    get('danmaku-input').value = '';
                 }
             });
+            const danmakus = [];
+            function createDanmaku(content, color) {
+                const danmaku = document.createElement('div');
+                danmaku.classList.add('danmaku');
+                danmaku.style.color = color;
+                danmaku.innerText = content;
+
+                // 随机生成弹幕的顶部位置
+                danmaku.style.top = `${Math.random() * 70}vh`;
+
+                get('danmaku-container').appendChild(danmaku);
+
+                // 动画结束后移除弹幕
+                danmaku.addEventListener('animationend', () => {
+                    danmaku.remove();
+                });
+            }
+            const socket = io.connect('http://localhost:3000');
+
+            bind(get('send-danmaku'), 'click', function () {
+                const danmakuContent = get('danmaku-input').value;
+                const color = get('color-picker').value;
+                if (danmakuContent) {
+                    socket.emit('danmaku', { content: danmakuContent, color: color }); // 发送弹幕数据
+                    get('danmaku-input').value = '';
+                }
+            });
+
+            // 接收来自服务器的弹幕数据
+            socket.on('danmaku', function (data) {
+                createDanmaku(data.content, data.color);
+            });
+
 
         </script>
     </body>

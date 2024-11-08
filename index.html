@@ -246,7 +246,7 @@
 
     <body>
 
-        <a href="http://liu13.fun" target="_blank" class="remove-underline"> ©山雾秋</a>
+        <a> ©山雾秋</a>
         <section id="main" style="padding:20px;">
             <video id="player" controls="controls"></video>
             <div id="gameContainer">
@@ -280,7 +280,7 @@
         </div>
 
         <div style="text-align: center;  bottom: 60px; width: 100%;margin-bottom: 30px;">
-            <button id="author" onclick="window.location.href='http://liu13.fun';">站长</button>
+            <button id="author" onclick="window.location.href='http://home.liu13.fun';">站长</button>
             <button id="searchWord">查词</button>
             <button id="announcement">玩法</button>
         </div>
@@ -35865,7 +35865,7 @@
                     let currentOption = get('option' + i);
 
                     // 检查当前选项是否是正确答案
-                    const isCorrectOption = currentOption.innerText === currentQuestion.options[currentQuestion.correct_option];
+                    const isCorrectOption = currentOption.innerText === currentQuestion.options[currentQuestion.correct_option+1];
 
                     if (isCorrectOption) {
                         currentOption.classList.add('correct');  // 正确选项变绿色

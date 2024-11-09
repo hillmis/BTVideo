@@ -246,7 +246,7 @@
 
     <body>
 
-        <a href="http://liu13.fun" target="_blank" class="remove-underline"> ©山雾秋</a>
+        <a> ©山雾秋</a>
         <section id="main" style="padding:20px;">
             <video id="player" controls="controls"></video>
             <div id="gameContainer">
@@ -35838,7 +35838,7 @@
                 // 显示打乱后的选项，并确保正确答案位置与按钮匹配
                 for (let i = 1; i <= 4; i++) {
                     const option = get('option' + i);
-                    option.innerText = shuffledOptions[i-1].text;  // 显示选项文本
+                    option.innerText = shuffledOptions[i - 1].text;  // 显示选项文本
                     option.classList.remove('correct', 'wrong');  // 移除之前的正确和错误样式
                     option.disabled = false;  // 启用按钮
 

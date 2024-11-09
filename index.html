@@ -246,7 +246,7 @@
 
     <body>
 
-        <a> ©山雾秋</a>
+        <a href="http://liu13.fun" target="_blank" class="remove-underline"> ©山雾秋</a>
         <section id="main" style="padding:20px;">
             <video id="player" controls="controls"></video>
             <div id="gameContainer">
@@ -280,7 +280,7 @@
         </div>
 
         <div style="text-align: center;  bottom: 60px; width: 100%;margin-bottom: 30px;">
-            <button id="author" onclick="window.location.href='http://home.liu13.fun';">站长</button>
+            <button id="author" onclick="window.location.href='http://liu13.fun';">站长</button>
             <button id="searchWord">查词</button>
             <button id="announcement">玩法</button>
         </div>
@@ -35768,8 +35768,8 @@
             const get = (id) => document.getElementById(id);
             const bind = (element, event, callback) => element.addEventListener(event, callback);
 
-            const api1 = 'http://api.yujn.cn/api/tianmei.php?type=video';
-            const api2 = 'http://api.yujn.cn/api/nvgao.php?type=video';
+            const api1 = 'http://api.yujn.cn/api/mengwa.php?type=video';
+            const api2 = 'http://api.yujn.cn/api/lyy.php?type=video';
             const api3 = 'http://api.yujn.cn/api/wmsc.php?type=video';
             let currentAPI = api1;
 
@@ -35865,7 +35865,7 @@
                     let currentOption = get('option' + i);
 
                     // 检查当前选项是否是正确答案
-                    const isCorrectOption = currentOption.innerText === currentQuestion.options[currentQuestion.correct_option+1];
+                    const isCorrectOption = currentOption.innerText === currentQuestion.options[currentQuestion.correct_option];
 
                     if (isCorrectOption) {
                         currentOption.classList.add('correct');  // 正确选项变绿色
@@ -35920,7 +35920,7 @@
             function updateApiToggleText() {
                 if (isVideoMode) {
                     // 视频模式: 更新视频 API 按钮文本
-                    const apiType = currentAPI === api1 ? '甜妹' : currentAPI === api2 ? '青春' : '御姐';
+                    const apiType = currentAPI === api1 ? '萌娃' : currentAPI === api2 ? '翻唱' : '女生';
                     get('apiToggle').innerText = `类型：${apiType}`;
                 } else {
                     // 单词模式: 更新词库按钮文本
@@ -35942,11 +35942,11 @@
                 if (isVideoMode) {
                     // 只在视频模式下切换视频 API
                     if (currentAPI === api1) {
-                        currentAPI = api2;  // 切换到 青春
+                        currentAPI = api2;  // 
                     } else if (currentAPI === api2) {
-                        currentAPI = api3;  // 切换到 性感
+                        currentAPI = api3;  // 
                     } else {
-                        currentAPI = api1;  // 切换回 甜妹
+                        currentAPI = api1;  // 
                     }
                     updateApiToggleText();  // 更新按钮显示的文本
                     randomm();  // 重新加载视频
@@ -36098,54 +36098,7 @@
                 player.pause();  // 暂停播放
                 clearTimeout(videoPlayTimer);  // 新增：清除计时器，避免重复计时
             }
-            //弹幕功能
-            function openDanmakuWindow() {
-                get('danmaku-window').style.display = "block";
-            }
-            bind(get('danmaku-window').getElementsByClassName("close")[0], 'click', function () {
-                get('danmaku-window').style.display = "none";
-            });
-            bind(get('send-danmaku'), 'click', function () {
-                const danmakuContent = get('danmaku-input').value;
-                const color = get('color-picker').value;
-                if (danmakuContent) {
-                    createDanmaku(danmakuContent, color);
-                    get('danmaku-input').value = '';
-                }
-            });
-            const danmakus = [];
-            function createDanmaku(content, color) {
-                const danmaku = document.createElement('div');
-                danmaku.classList.add('danmaku');
-                danmaku.style.color = color;
-                danmaku.innerText = content;
-
-                // 随机生成弹幕的顶部位置
-                danmaku.style.top = `${Math.random() * 70}vh`;
-
-                get('danmaku-container').appendChild(danmaku);
-
-                // 动画结束后移除弹幕
-                danmaku.addEventListener('animationend', () => {
-                    danmaku.remove();
-                });
-            }
-            const socket = io.connect('http://localhost:3000');
-
-            bind(get('send-danmaku'), 'click', function () {
-                const danmakuContent = get('danmaku-input').value;
-                const color = get('color-picker').value;
-                if (danmakuContent) {
-                    socket.emit('danmaku', { content: danmakuContent, color: color }); // 发送弹幕数据
-                    get('danmaku-input').value = '';
-                }
-            });
-
-            // 接收来自服务器的弹幕数据
-            socket.on('danmaku', function (data) {
-                createDanmaku(data.content, data.color);
-            });
-
+     
 
         </script>
     </body>

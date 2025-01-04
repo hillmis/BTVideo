@@ -62,9 +62,9 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 100;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
             visibility: hidden;
-            will-change: opacity;
+            will-change: opacity, visibility;
         }
 
         #popupContainer.show {
@@ -80,6 +80,12 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             text-align: center;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        #popupContainer.show #popup {
+            transform: translateY(0);
         }
 
         button,

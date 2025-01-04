@@ -183,7 +183,7 @@
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: clamp(14px, 1.2vw, 18px);
+            font-size: 20px;
             font-weight: bold;
             color: white;
             text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
@@ -192,7 +192,7 @@
             gap: 40px;
             justify-content: space-around;
             flex-wrap: nowrap;
-            margin: 10px 0;
+            display: flex;
             white-space: nowrap;
         }
 
@@ -580,19 +580,22 @@
         /* 全局变量定义 */
         :root {
             --text-color-default: white;
-            --icon-color-default: black;
+            --icon-color-default: white;
+            /* 默认图标颜色 */
             --background-color-default: white;
             --progress-bar-color-default: white;
             /* 默认进度条颜色 */
 
             --text-color-pink: #ff69b4;
             --icon-color-pink: #ff69b4;
+            /* 粉色主题图标颜色 */
             --background-color-pink: #ffe6f2;
             --progress-bar-color-pink: #ff69b4;
             /* 粉色主题进度条颜色 */
 
             --text-color-cyan: #00bcd4;
             --icon-color-cyan: #00bcd4;
+            /* 青色主题图标颜色 */
             --background-color-cyan: #e0f7fa;
             --progress-bar-color-cyan: #00bcd4;
             /* 青色主题进度条颜色 */
@@ -610,11 +613,42 @@
             transition: width 0.1s;
             /* 动画效果 */
         }
+
+        /* 添加图标颜色的 CSS 变量 */
+        :root {
+            --icon-color-default: white;
+            /* 默认图标颜色 */
+            --icon-color-pink: #ff69b4;
+            /* 粉色主题图标颜色 */
+            --icon-color-cyan: #00bcd4;
+            /* 青色主题图标颜色 */
+        }
+
+        /* 应用图标颜色 */
+        #sideButton,
+        #favoriteButton,
+        #downloadSideButton {
+            color: var(--icon-color-default);
+            /* 使用变量 */
+        }
+
+        /* 主题切换时更新图标颜色 */
+        body.pink #sideButton,
+        body.pink #favoriteButton,
+        body.pink #downloadSideButton {
+            color: var(--icon-color-pink);
+        }
+
+        body.cyan #sideButton,
+        body.cyan #favoriteButton,
+        body.cyan #downloadSideButton {
+            color: var(--icon-color-cyan);
+        }
     </style>
 </head>
 
 <body>
-    <div id="sideButton" onclick="togglePopup(true)">⚙️</div>
+    <div id="sideButton" onclick="togglePopup(true)">💠</div>
     <div id="favoriteButton" onclick="handleFavorite()">★</div>
     <div id="downloadSideButton">⬇</div>
     <button id="notificationButton" style="font-size: 14px" class="typeButton" disabled>通知</button>
@@ -1736,15 +1770,15 @@
         /* 全局变量定义 */
         :root {
             --text-color-default: white;
-            --icon-color-default: black;
+            --icon-color-default: white; /* 默认图标颜色 */
             --background-color-default: white;
 
             --text-color-pink: #ff69b4;
-            --icon-color-pink: #ff69b4;
+            --icon-color-pink: #ff69b4; /* 粉色主题图标颜色 */
             --background-color-pink: #ffe6f2;
 
             --text-color-cyan: #00bcd4;
-            --icon-color-cyan: #00bcd4;
+            --icon-color-cyan: #00bcd4; /* 青色主题图标颜色 */
             --background-color-cyan: #e0f7fa;
         }
 
@@ -1800,12 +1834,5 @@
         </script>
 
 </body>
-
-</html>
-
-</html>
-</body>
-
-</html>
 
 </html>

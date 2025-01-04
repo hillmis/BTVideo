@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <link rel="stylesheet" href="like.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全屏随机视频-山雾秋</title>
+    <style>
+        /* CSS 重置 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 样式保持不变 */
+        body,
+        html {
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #videoContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgb(0, 0, 0);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-backdrop-filter: blur(10px);
+            /* Safari */
+            backdrop-filter: blur(10px);
+        }
+
+        video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+            top: 50%;
+            left: 50%;
+            -webkit-appearance: none;
+            /* Safari */
+            -moz-appearance: none;
+            /* Firefox */
+            appearance: none;
+        }
+
+        #popupContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            visibility: hidden;
+        }
+
+        #popupContainer.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #popup {
+            background: rgba(255, 255, 255, 0);
+            padding: 20px;
+            border-radius: 10px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        button,
+        .typeButton {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: clamp(10px, 1vw, 14px);
+            backdrop-filter: blur(10px);
+            -webkit-appearance: button;
+            /* Safari */
+            -moz-appearance: button;
+            /* Firefox */
+            appearance: button;
+        }
+
+        #loadingAnimation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 200;
+        }
+
+        #loadingAnimation.show {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        #loadingAnimation {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loader {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid rgba(255, 255, 255, 1);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+
+        #nextVideoButton {
+            position: fixed;
+            top: 70%;
+            left: 70%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: clamp(12px, 1vw, 16px);
+            backdrop-filter: blur(10px);
+            z-index: 102;
+        }
+
+
+
+        @keyframes colorChange {
+            0% {
+                background-color: rgba(45, 199, 86, 0.556);
+            }
+
+            50% {
+                background-color: rgba(51, 160, 197, 0.556);
+            }
+
+            100% {
+                background-color: rgba(70, 62, 188, 0.671);
+            }
+        }
+
+        #videoTitle {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: clamp(14px, 1.2vw, 18px);
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+
+        .menu-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .menu-item.active {
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        #sideButton,
+        #favoriteButton,
+        #downloadSideButton {
+            position: fixed;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(108, 108, 108, 0.43);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: right 0.5s ease, color 0.3s ease;
+            z-index: 101;
+        }
+
+        #sideButton {
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        #favoriteButton {
+            top: 35%;
+            transform: translateY(-50%);
+            color: white;
+        }
+
+        #downloadSideButton {
+            top: 65%;
+            transform: translateY(-50%);
+        }
+
+        #sideButton.hidden,
+        #favoriteButton.hidden,
+        #downloadSideButton.hidden {
+            right: -15px;
+        }
+
+        #notificationButton {
+            position: fixed;
+            top: 10%;
+            /* 距离顶部25% */
+            right: 10px;
+            /* 距离右侧10px */
+            z-index: 102;
+            /* 保证按钮层级较高 */
+            font-size: clamp(10px, 0.9vw, 14px);
+            color: white;
+        }
+
+        #pageDescription {
+            background: rgba(255, 255, 255, 0);
+            /* 背景半透明 */
+            border-radius: 10px;
+            /* 圆角 */
+            margin-top: 10px;
+            /* 顶部间距 */
+            padding: 15px;
+            /* 内边距 */
+            font-weight: bold;
+            line-height: 1.5;
+            font-size: clamp(10px, 0.9vw, 13px);
+        }
+
+        .likeEffect {
+            position: absolute;
+            display: none;
+            /* 默认隐藏 */
+            transform: translate(-50%, -50%);
+            z-index: 999;
+            /* 确保在顶部 */
+            pointer-events: none;
+            /* 防止拦截点击事件 */
+        }
+
+        /* 为 like-button 添加心跳动画 */
+        .likeEffect like-button {
+            display: inline-block;
+            animation: heart-beat 1s infinite;
+        }
+
+        @keyframes heart-beat {
+
+            0%,
+            100% {
+                transform: scale(1);
+                /* 正常大小 */
+            }
+
+            50% {
+                transform: scale(1.5);
+                /* 放大 */
+            }
+        }
+
+        .likeEffect .star-1,
+        .likeEffect .star-2,
+        .likeEffect .star-3,
+        .likeEffect .star-4,
+        .likeEffect .star-5,
+        .likeEffect .star-6 {
+            animation: star-burst 1s ease-out forwards;
+        }
+
+        /* 修改星星扩展的动画效果 */
+        @keyframes star-burst {
+            0% {
+                transform: scale(0.5) translate(0, 0);
+                /* 初始缩小在原地 */
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.5) translate(-50px, -50px);
+                /* 中间位置向左上扩展 */
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(2.5) translate(-100px, -100px);
+                /* 最终更大，并偏移更远 */
+                opacity: 0;
+                /* 完全消失 */
+            }
+        }
+
+        /* 调整每颗星星的位置和方向 */
+        .likeEffect .star-1 {
+            transform-origin: center;
+        }
+
+        .likeEffect .star-2 {
+            transform-origin: center;
+            animation-delay: 0.1s;
+            /* 延迟一点时间 */
+        }
+
+        .likeEffect .star-3 {
+            transform-origin: center;
+            animation-delay: 0.2s;
+        }
+
+        .likeEffect .star-4 {
+            transform-origin: center;
+            animation-delay: 0.3s;
+        }
+
+        .likeEffect .star-5 {
+            transform-origin: center;
+            animation-delay: 0.4s;
+        }
+
+        .likeEffect .star-6 {
+            transform-origin: center;
+            animation-delay: 0.5s;
+        }
+
+        #favoriteList {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 300px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            box-sizing: border-box;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        #favoriteList.show {
+            right: 0;
+        }
+
+        #favoriteList h3 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: clamp(12px, 1.1vw, 16px);
+        }
+
+        .favorite-item {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 8px;
+            padding: 12px;
+            border-radius: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .favorite-item button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px 10px;
+            margin-left: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .favorite-item button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .favorite-title {
+            font-size: clamp(10px, 0.9vw, 14px);
+            margin-right: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .favorite-buttons {
+            display: flex;
+            align-items: center;
+        }
+
+        /* 添加媒体查询以优化移动设备显示 */
+        @media screen and (max-width: 768px) {
+
+            button,
+            .typeButton {
+                padding: 8px 15px;
+                font-size: clamp(10px, 3vw, 12px);
+            }
+
+            #videoTitle {
+                font-size: clamp(12px, 3.5vw, 16px);
+            }
+
+            .favorite-title {
+                font-size: clamp(10px, 3vw, 12px);
+            }
+
+            #pageDescription {
+                font-size: clamp(10px, 2.8vw, 12px);
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+
+            button,
+            .typeButton {
+                padding: 6px 12px;
+                font-size: clamp(10px, 3.2vw, 12px);
+            }
+
+            #videoTitle {
+                font-size: clamp(12px, 3.8vw, 14px);
+            }
+        }
+
+        /* 添加动画效果 */
+        @keyframes slideIn {
+            0% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* 视频类型按钮的样式 */
+        #videoTypes {
+            display: none;
+            /* 初始隐藏 */
+            animation: slideIn 0.5s forwards;
+            /* 添加进入动画 */
+        }
+
+        #videoTypes.hide {
+            animation: slideOut 0.5s forwards;
+            /* 添加退出动画 */
+        }
+
+        /* 新的悬浮窗口样式 */
+        #videoTypePopup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            visibility: hidden;
+        }
+
+        #videoTypePopup.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #videoTypeContent {
+            background: rgba(255, 255, 255, 0);
+            padding: 20px;
+            border-radius: 10px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sideButton" onclick="togglePopup(true)">⚙️</div>
+    <div id="favoriteButton" onclick="handleFavorite()">★</div>
+    <div id="downloadSideButton">⬇</div>
+    <button id="notificationButton" style="font-size: 14px" class="typeButton" disabled>通知</button>
+    <div id="videoContainer">
+        <button id="nextVideoButton" data-hint="下一个视频来咯" style="display: none;">切换下一个视频</button>
+        <video id="player" autoplay></video>
+        <div id="videoTitle">
+            <span id="randomVideoBtn" class="menu-item active" onclick="switchToRandom()">推荐</span>
+            <span id="showFavoriteListBtn" class="menu-item" onclick="switchToFavorites()">收藏</span>
+            <span id="videoTypeBtn" class="menu-item" onclick="toggleVideoTypePopup()">分类</span>
+        </div>
+        <div id="videoTypes" style="display: none;">
+            <button class="typeButton" data-api="http://www.yujn.cn/api/zzxjj.php?type=video">小姐姐</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/yuzu.php?type=video">钰足</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/tianmei.php?type=video">甜妹</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/jksp.php?type=video">jk洛丽塔</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/ndym.php?type=video">你的欲梦</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/sbkl.php?type=video">双倍快乐</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/rewu.php?type=video">热舞系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/luoli.php?type=video">萝莉系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/shejie.php?type=video">蛇姐系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/hanfu.php?type=video">汉服系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/manyao.php?type=video">慢摇系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/diaodai.php?type=video">吊带系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/qingchun.php?type=video">清纯系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/COS.php?type=video">COS系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/nvgao.php?type=video">纯情女高</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/jiepai.php?type=video">街拍系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/manzhan.php?type=video">漫展视频</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/lyy.php?type=video">懒洋洋</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/wmsc.php?type=video">完美身材</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/shwd.php?type=video">丝滑舞蹈</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/chuanda.php?type=video">穿搭系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/jjy.php?type=video">鞠婧祎</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/zrn.php?type=video">章若楠</button>
+            <button class="typeButton" data-api="http://api.yujn.cn/api/heisis.php?type=video">黑丝系列</button>
+        </div>
+        <div id="popupContainer">
+            <div id="popup">
+                <!-- 网页介绍区域 -->
+                <div id="pageDescription"
+                    style="grid-column: span 3; text-align: center; padding: 10px; color: white; font-size: 13px;">
+                    这里是山雾秋制作的视频播放页，采用了免费API测试功能，有任何问题可以联系作者180782569。
+                </div>
+                <button id="autoplayToggle" data-hint="自动连播" style="font-size: 14px">连播：开</button>
+                <button id="themeToggle" data-hint="切换主题" style="font-size: 14px">主题：默认</button>
+                <button id="muteButton" data-hint="静音吗？" style="font-size: 14px">静音：关</button>
+                <div style="grid-column: span 3; text-align: center; font-size: 12px;">
+                    <a href="https://mein.rth5.com/" target="_blank">
+                        <button class="typeButton">小屏</button>
+                    </a>
+                </div>
+                <!-- 网页版权区域 -->
+                <div id="pageDescription"
+                    style="grid-column: span 3; text-align: center; padding: 10px; color: rgb(222, 164, 50); font-size: 13px;">
+                    <a href="http://home.liu13.fun" target="_blank"
+                        style="text-decoration: none; color: rgb(222, 164, 50);">©山雾秋</a>
+                </div>
+            </div>
+        </div>
+        <div id="loadingAnimation" style="display: none;">
+            <div class="loader"></div>
+        </div>
+    </div>
+    <div class="likeEffect" id="likeEffect">
+        <div class="star-1">
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 784.11 815.53"
+                style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+                version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                <defs></defs>
+                <g id="Layer_x0020_1">
+                    <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+                    <path
+                        d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                        class="fil0"></path>
+                </g>
+            </svg>
+        </div>
+        <div class="star-2">
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 784.11 815.53"
+                style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+                version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                <use href="#Layer_x0020_1" />
+            </svg>
+        </div>
+        <div class="star-3">
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 784.11 815.53"
+                style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+                version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                <use href="#Layer_x0020_1" />
+            </svg>
+        </div>
+        <div class="star-4">
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 784.11 815.53"
+                style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+                version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                <use href="#Layer_x0020_1" />
+            </svg>
+        </div>
+        <div class="star-5">
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 784.11 815.53"
+                style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+                version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                <use href="#Layer_x0020_1" />
+            </svg>
+        </div>
+        <div class="star-6">
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 784.11 815.53"
+                style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+                version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                <use href="#Layer_x0020_1" />
+            </svg>
+        </div>
+        <div class="star-7">
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 784.11 815.53"
+                style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+                version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                <use href="#Layer_x0020_1" />
+            </svg>
+        </div>
+        <div class="star-8">
+            <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 784.11 815.53"
+                style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+                version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+                <use href="#Layer_x0020_1" />
+            </svg>
+        </div>
+    </div>
+    <div id="favoriteList">
+        <h3>收藏列表</h3>
+        <div id="favoriteListContent"></div>
+    </div>
+    <div id="videoTypePopup" class="popupContainer">
+        <div id="videoTypeContent">
+            <button class="typeButton" data-api="http://www.yujn.cn/api/zzxjj.php?type=video">小姐姐</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/yuzu.php?type=video">钰足</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/tianmei.php?type=video">甜妹</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/jksp.php?type=video">jk洛丽塔</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/ndym.php?type=video">你的欲梦</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/sbkl.php?type=video">双倍快乐</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/rewu.php?type=video">热舞系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/luoli.php?type=video">萝莉系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/shejie.php?type=video">蛇姐系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/hanfu.php?type=video">汉服系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/manyao.php?type=video">慢摇系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/diaodai.php?type=video">吊带系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/qingchun.php?type=video">清纯系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/COS.php?type=video">COS系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/nvgao.php?type=video">纯情女高</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/jiepai.php?type=video">街拍系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/manzhan.php?type=video">漫展视频</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/lyy.php?type=video">懒洋洋</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/wmsc.php?type=video">完美身材</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/shwd.php?type=video">丝滑舞蹈</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/chuanda.php?type=video">穿搭系列</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/jjy.php?type=video">鞠婧祎</button>
+            <button class="typeButton" data-api="http://www.yujn.cn/api/zrn.php?type=video">章若楠</button>
+            <button class="typeButton" data-api="http://api.yujn.cn/api/heisis.php?type=video">黑丝系列</button </div>
+        </div>
+        <script>
+            const player = document.getElementById('player');
+            const popupContainer = document.getElementById('popupContainer');
+            let muted = false;
+            let currentAPI = 'http://www.yujn.cn/api/zzxjj.php?type=video';
+            let longPressTimer, touchStartY, touchEndY;
+            let isScrolling = false;
+            let currentAnimatingButton = null;
+            let auto = true; // 默认开启自动连播
+            let currentVideoURL = ''; // 记录当前正在播放的视频URL
+            let favorites = JSON.parse(localStorage.getItem('videoFavorites') || '[]');
+
+            // 定义 bind 函数用于添加事件监听器
+            function bind(element, event, callback) {
+                element.addEventListener(event, callback);
+            }
+
+            // 修改自动连播按钮的点击事件
+            bind(document.getElementById('autoplayToggle'), 'click', function () {
+                auto = !auto;
+                this.innerText = '连播：' + (auto ? '开' : '关');
+            });
+
+            // 当视频播放结束时，根据自动连播状态决定是否循环播放
+            bind(player, 'ended', function () {
+                if (auto) {
+                    // 如果自动连播开启，加载下一个视频
+                    loadVideo(currentAPI);
+                }
+            });
+
+            // 修改loadVideo函数
+            function loadVideo(api) {
+                document.getElementById('loadingAnimation').style.display = 'block';
+                player.src = `${api}&t=${Math.random()}`;
+                currentVideoURL = player.src;
+
+                player.onloadeddata = () => {
+                    checkFavoriteStatus();
+                };
+
+                player.onerror = () => {
+                    console.error('Video loading error:', player.error);
+                    currentVideoURL = '';
+                    document.getElementById('loadingAnimation').style.display = 'none';
+                    showNotification('视频加载失败，尝试下一个...');
+                    if (auto) {
+                        setTimeout(() => loadVideo(api), 1000);
+                    }
+                };
+
+                player.onloadedmetadata = () => {
+                    document.getElementById('loadingAnimation').style.display = 'none';
+                    player.play();
+                };
+            }
+
+            // 处理收藏功能
+            function handleFavorite() {
+                const videoElement = document.querySelector('video');
+                if (!videoElement || !videoElement.src) {
+                    showNotification('无法获取视频地址！');
+                    return;
+                }
+
+                const videoUrl = videoElement.src;
+                // 获取当前视频的标题（使用API名称作为标题）
+                const activeButton = document.querySelector('.typeButton[data-api="' + currentAPI + '"]');
+                const videoTitle = activeButton ? activeButton.textContent : '未知视频';
+
+                const index = favorites.findIndex(item => item.url === videoUrl);
+                if (index === -1) {
+                    // 添加到收藏
+                    favorites.push({
+                        url: videoUrl,
+                        title: videoTitle,
+                        date: new Date().toLocaleString()
+                    });
+                    document.getElementById('favoriteButton').style.color = '#ffd700';
+                    showNotification('已添加到收藏！');
+                } else {
+                    // 取消收藏
+                    favorites.splice(index, 1);
+                    document.getElementById('favoriteButton').style.color = 'white';
+                    showNotification('已取消收藏！');
+                }
+                localStorage.setItem('videoFavorites', JSON.stringify(favorites));
+                updateFavoriteList();
+            }
+
+            // 显示通知的函数
+            function showNotification(message) {
+                const notificationButton = document.getElementById('notificationButton');
+                notificationButton.textContent = message;
+                notificationButton.style.display = 'block';
+
+                clearTimeout(hideNotificationTimeout);
+                hideNotificationTimeout = setTimeout(() => {
+                    notificationButton.style.display = 'none';
+                }, 3000);
+            }
+
+            // 检查当前视频是否已收藏
+            function checkFavoriteStatus() {
+                const favoriteButton = document.getElementById('favoriteButton');
+                const videoElement = document.querySelector('video');
+
+                if (!videoElement || !videoElement.src) {
+                    favoriteButton.style.color = 'white';
+                    return;
+                }
+
+                const videoUrl = videoElement.src;
+                const isInFavorites = favorites.some(item => item.url === videoUrl);
+                favoriteButton.style.color = isInFavorites ? '#ffd700' : 'white';
+            }
+
+            document.addEventListener('touchstart', e => handleTouch(e, true));
+            document.addEventListener('touchend', e => handleTouch(e, false));
+
+
+            document.getElementById('muteButton').onclick = () => {
+                muted = !muted;
+                player.muted = muted;
+                document.getElementById('muteButton').textContent = muted ? '静音：开' : '静音：关';
+            };
+
+            // 类型按钮点击处理
+            document.querySelectorAll('.typeButton').forEach(button => {
+                button.onclick = () => {
+                    currentAPI = button.dataset.api;
+                    loadVideo(currentAPI);
+                    togglePopup(false);
+                    startColorAnimation(button);
+                };
+            });
+
+            // 颜色动画
+            function startColorAnimation(button) {
+                if (currentAnimatingButton) stopColorAnimation();
+                currentAnimatingButton = button;
+                button.style.animation = 'colorChange 0.5s infinite alternate';
+            }
+
+            function stopColorAnimation() {
+                if (currentAnimatingButton) currentAnimatingButton.style.animation = '';
+                currentAnimatingButton = null;
+            }
+
+            // 切换视频按钮（仅桌面）
+            document.getElementById('nextVideoButton').onclick = () => loadVideo(currentAPI);
+
+            document.getElementById('randomVideoBtn').onclick = () => {
+                location.reload();
+            };
+
+            // 显示切换按钮于桌面
+            if (window.innerWidth > 800) {
+                document.getElementById('nextVideoButton').style.display = 'block';
+            }
+            const swipeThreshold = 50; // 滑动距离阈值，用于判断是否为有效滑动
+
+            // 开始触摸，记录起始位置
+            document.addEventListener('touchstart', function (e) {
+                touchStartY = e.changedTouches[0].screenY;
+            });
+
+            // 结束触摸，判断滑动方向并切换视频
+            document.addEventListener('touchend', function (e) {
+                touchEndY = e.changedTouches[0].screenY;
+                const swipeDistance = touchStartY - touchEndY;
+
+                // 判断是否达到滑动距离阈值
+                if (Math.abs(swipeDistance) > swipeThreshold) {
+                    if (swipeDistance > 0) {
+                        // 向上滑动，切换到下一个视频
+                        loadVideo(currentAPI); // 根据需要替换为加载下一个视频的 API 地址
+                    } else {
+                        // 向下滑动，切换到上一个视频或重新加载当前视频
+                        loadVideo(currentAPI); // 根据需要替换为加载上一个视频的 API 地址
+                    }
+                }
+            });
+            function togglePopup(show) {
+                popupContainer.classList.toggle('show', show);
+            }
+
+            // 点击弹窗外部关闭弹窗
+            popupContainer.addEventListener('click', function (e) {
+                if (e.target === popupContainer) {
+                    togglePopup(false);
+                }
+            });
+
+            // 长按事件
+            const longPressDuration = 600; // 长按时间（毫秒）
+
+            // 显示弹窗的函数
+            function showPopup() {
+                popupContainer.classList.add('show');
+            }
+
+            // 隐藏弹窗的函数
+            function hidePopup() {
+                popupContainer.classList.remove('show');
+            }
+
+
+            // 监听整个文档的触摸移动事件，用于判断是否为有效滑动
+            bind(document, 'touchmove', function (e) {
+                const touchMoveY = e.touches[0].screenY;
+                const diffY = Math.abs(touchStartY - touchMoveY);
+                const diffX = Math.abs(e.touches[0].screenX - touchStartX);
+                if (diffY > 10 && diffX < diffY) {
+                    isScrolling = true;
+                }
+            });
+            // 触摸开始事件，设置长按计时器
+            document.addEventListener('touchstart', function (e) {
+                longPressTimer = setTimeout(showPopup, longPressDuration);
+            });
+
+            // 触摸结束事件，清除长按计时器
+            document.addEventListener('touchend', function () {
+                clearTimeout(longPressTimer);
+            });
+
+            // 触摸移动事件，如果用户移动手指，取消长按计时器
+            document.addEventListener('touchmove', function () {
+                clearTimeout(longPressTimer);
+            });
+
+            // 鼠标长按支持（用于非触屏设备）
+            document.addEventListener('mousedown', function () {
+                longPressTimer = setTimeout(showPopup, longPressDuration);
+            });
+
+            // 鼠标松开或离开视频时清除计时器
+            document.addEventListener('mouseup', function () {
+                clearTimeout(longPressTimer);
+            });
+            document.addEventListener('mouseleave', function () {
+                clearTimeout(longPressTimer);
+            });
+
+            const sideButton = document.getElementById('sideButton');
+            let buttonTimeout;
+
+            // 优化自动隐藏按钮逻辑
+            function startHideButtonTimer() {
+                clearTimeout(buttonTimeout); // 清除之前的计时器
+                buttonTimeout = setTimeout(() => {
+                    sideButton.classList.add('hidden'); // 半遮按钮
+                }, 3000); // 3秒后隐藏
+            }
+
+            // 点击按钮显示或关闭弹窗
+            sideButton.onclick = () => {
+                if (popupContainer.classList.contains('show')) {
+                    // 如果弹窗已打开，关闭弹窗并隐藏按钮
+                    togglePopup(false);
+                    sideButton.classList.add('hidden'); // 隐藏按钮
+                } else {
+                    // 如果弹窗未打开，打开弹窗并显示按钮
+                    togglePopup(true);
+                    sideButton.classList.remove('hidden'); // 显示按钮
+                    startHideButtonTimer(); // 重启计时器
+                }
+            };
+
+
+            // 鼠标或触摸事件触发时，重置计时器
+            document.addEventListener('mousemove', startHideButtonTimer);
+            document.addEventListener('touchstart', startHideButtonTimer);
+
+            const notificationButton = document.getElementById('notificationButton');
+            const notifications = [
+                "欢迎来到我们的平台！",
+                "新的视频已经上线，快来观看吧！",
+                "记得点击自动连播按钮，让精彩不停歇！",
+                "点击屏幕右侧的按钮可以切换视频类型。",
+                "长按屏幕，也可以打开设置哦！",
+                "喜欢我们的平台吗？那就分享给身边的人吧！",
+                "需要帮助？点击屏幕右侧的设置按钮获取帮助。"
+            ];
+            let currentNotificationIndex = 0;
+            let notificationInterval;
+            let hideNotificationTimeout;
+            let resetNotificationTimeout;
+
+            // 优化自动更新通知内容的函数
+            function updateNotification() {
+                notificationButton.textContent = notifications[currentNotificationIndex];
+                notificationButton.style.display = 'block';
+                currentNotificationIndex = (currentNotificationIndex + 1) % notifications.length;
+
+                clearTimeout(hideNotificationTimeout);
+                hideNotificationTimeout = setTimeout(() => {
+                    notificationButton.style.display = 'none';
+                }, 3000); // 3秒后隐藏
+            }
+
+            // 点击按钮时显示特定提示
+            document.querySelectorAll('.typeButton').forEach(button => {
+                button.addEventListener('click', () => {
+                    // 获取按钮的特定提示
+                    const hint = button.getAttribute('data-hint');
+
+                    // 立即显示提示内容
+                    notificationButton.textContent = hint;
+                    notificationButton.style.display = 'block';
+
+                    // 清除自动通知和隐藏定时器
+                    clearTimeout(hideNotificationTimeout);
+                    clearInterval(notificationInterval);
+
+                    // 3秒后恢复自动通知更新
+                    clearTimeout(resetNotificationTimeout);
+                    resetNotificationTimeout = setTimeout(() => {
+                        notificationInterval = setInterval(updateNotification, 5000); // 恢复自动切换
+                        updateNotification(); // 立即恢复自动通知
+                    }, 3000);
+                });
+            });
+
+            // 每隔5秒自动更新通知内容
+            notificationInterval = setInterval(updateNotification, 10000);
+            updateNotification();
+
+            // 视频播放器单击和双击事件处理
+            const likeEffect = document.getElementById('likeEffect');
+            const videoPlayer = document.getElementById('player');
+
+            let singleClickTimeout = null; // 用于区分单击和双击
+
+            // 显示动画效果的函数
+            function showLikeEffect(x, y, isRemoving = false) {
+                const likeEffect = document.getElementById('likeEffect');
+
+                // 设置容器大小和位置，使用屏幕中心
+                likeEffect.style.width = '400px';
+                likeEffect.style.height = '400px';
+                likeEffect.style.left = '74%';
+                likeEffect.style.top = '74%';
+                likeEffect.style.transform = 'translate(-50%, -50%)';
+                likeEffect.style.display = 'block';
+
+                // 移除之前的所有类
+                likeEffect.classList.remove('scatter', 'gather');
+
+                // 计算8个方向的位置
+                const radius = Math.min(window.innerWidth, window.innerHeight) * 0.3; // 根据屏幕大小调整散开半径
+                const stars = likeEffect.children;
+                for (let i = 0; i < stars.length; i++) {
+                    const angle = (i * Math.PI * 2) / stars.length;
+                    const tx = Math.cos(angle) * radius;
+                    const ty = Math.sin(angle) * radius;
+                    stars[i].style.setProperty('--tx', `${tx}px`);
+                    stars[i].style.setProperty('--ty', `${ty}px`);
+
+                    // 设置动画延迟，创造波浪效果
+                    const delay = isRemoving ? i * 0.1 : (stars.length - i - 1) * 0.1;
+                    stars[i].style.animationDelay = `${delay}s`;
+                }
+
+                // 添加新的动画类
+                likeEffect.classList.add(isRemoving ? 'scatter' : 'gather');
+
+                // 动画结束后隐藏
+                setTimeout(() => {
+                    likeEffect.style.display = 'none';
+                    likeEffect.classList.remove('scatter', 'gather');
+                    Array.from(stars).forEach(star => {
+                        star.style.animationDelay = '0s';
+                    });
+                }, 2500);
+            }
+
+            // 单击逻辑（播放/暂停）
+            function handleSingleClick() {
+                if (videoPlayer.paused) {
+                    videoPlayer.play();
+                } else {
+                    videoPlayer.pause();
+                }
+            }
+
+            // 双击逻辑（触发动画和收藏）
+            function handleDoubleClick(event) {
+                // 检查当前视频是否已收藏
+                const videoElement = document.querySelector('video');
+                const videoUrl = videoElement?.src;
+                const isCurrentlyFavorited = favorites.some(item => item.url === videoUrl);
+
+                showLikeEffect(0, 0, isCurrentlyFavorited); // 坐标参数不再使用
+                handleFavorite();
+            }
+
+            // 单击与双击事件监听
+            videoPlayer.addEventListener('click', (event) => {
+                if (singleClickTimeout) {
+                    clearTimeout(singleClickTimeout);
+                    singleClickTimeout = null;
+                    handleDoubleClick(event);
+                } else {
+                    singleClickTimeout = setTimeout(() => {
+                        handleSingleClick();
+                        singleClickTimeout = null;
+                    }, 300);
+                }
+            });
+
+            // 触摸事件处理
+            let lastTouchTime = 0;
+            videoPlayer.addEventListener('touchend', (event) => {
+                const now = Date.now();
+                if (now - lastTouchTime < 300) {
+                    const videoElement = document.querySelector('video');
+                    const videoUrl = videoElement?.src;
+                    const isCurrentlyFavorited = favorites.some(item => item.url === videoUrl);
+
+                    showLikeEffect(0, 0, isCurrentlyFavorited); // 坐标参数不再使用
+                    handleFavorite();
+                    lastTouchTime = 0;
+                } else {
+                    lastTouchTime = now;
+                }
+            });
+
+            // 自动隐藏按钮
+            function startHideButtonTimer() {
+                clearTimeout(buttonTimeout);
+                const buttons = [sideButton, favoriteButton, downloadSideButton];
+                buttonTimeout = setTimeout(() => {
+                    buttons.forEach(button => button.classList.add('hidden'));
+                }, 3000);
+            }
+
+            // 显示按钮
+            function showButtons() {
+                const buttons = [sideButton, favoriteButton, downloadSideButton];
+                buttons.forEach(button => button.classList.remove('hidden'));
+                startHideButtonTimer();
+            }
+
+            // 更新事件监听器
+            document.addEventListener('mousemove', showButtons);
+            document.addEventListener('touchstart', showButtons);
+
+            const favoriteList = document.getElementById('favoriteList');
+            const showFavoriteListBtn = document.getElementById('showFavoriteListBtn');
+            const favoriteListContent = document.getElementById('favoriteListContent');
+
+            // 显示/隐藏收藏列表
+            showFavoriteListBtn.onclick = () => {
+                favoriteList.classList.toggle('show');
+                if (favoriteList.classList.contains('show')) {
+                    updateFavoriteList();
+                }
+            };
+
+            // 更新收藏列表
+            function updateFavoriteList() {
+                favoriteListContent.innerHTML = '';
+
+                if (favorites.length === 0) {
+                    favoriteListContent.innerHTML = `
+                    <div style="text-align: center; color: white; padding: 20px;">
+                        暂无收藏视频
+                        <div style="font-size: 12px; color: #999; margin-top: 10px;">
+                            双击视频或点击星标添加收藏
+                        </div>
+                    </div>`;
+                    return;
+                }
+
+                // 添加搜索框
+                const searchBox = document.createElement('div');
+                searchBox.innerHTML = `
+                <div style="padding: 10px; margin-bottom: 10px;">
+                    <input type="text" id="favoriteSearch" placeholder="搜索收藏..." 
+                        style="width: 100%; padding: 8px; border-radius: 15px; border: none; 
+                        background: rgba(255, 255, 255, 0.1); color: white; outline: none;">
+                </div>
+            `;
+                favoriteListContent.appendChild(searchBox);
+
+                // 添加排序选项
+                const sortOptions = document.createElement('div');
+                sortOptions.innerHTML = `
+                <div style="padding: 0 10px 10px 10px; display: flex; justify-content: space-between;">
+                    <select id="sortFavorites" 
+                        style="padding: 5px; border-radius: 10px; border: none; 
+                        background: rgba(255, 255, 255, 0.1); color: white; outline: none;">
+                        <option value="newest">最新收藏</option>
+                        <option value="oldest">最早收藏</option>
+                    </select>
+                    <button onclick="clearAllFavorites()" 
+                        style="padding: 5px 10px; border-radius: 10px; border: none; 
+                        background: rgba(255, 0, 0, 0.3); color: white; cursor: pointer;">
+                        清空收藏
+                    </button>
+                    <span style="color: #999; font-size: 12px;">共 ${favorites.length} 个收藏</span>
+                </div>
+            `;
+                favoriteListContent.appendChild(sortOptions);
+
+                // 创建收藏列表容器
+                const listContainer = document.createElement('div');
+                listContainer.id = 'favoriteItemsContainer';
+                listContainer.style.maxHeight = '70vh';
+                listContainer.style.overflowY = 'auto';
+                favoriteListContent.appendChild(listContainer);
+
+                // 渲染收藏项目
+                function renderFavorites(items) {
+                    listContainer.innerHTML = '';
+                    items.forEach((item, index) => {
+                        const favoriteItem = document.createElement('div');
+                        favoriteItem.className = 'favorite-item';
+
+                        // 计算收藏时间
+                        const timeAgo = getTimeAgo(new Date(item.date));
+
+                        favoriteItem.innerHTML = `
+                        <div style="flex: 1;">
+                            <div class="favorite-title">${item.title}</div>
+                            <div style="font-size: 11px; color: #999; margin-top: 4px;">
+                                收藏于 ${timeAgo}
+                            </div>
+                        </div>
+                        <div class="favorite-buttons">
+                            <button onclick="playFavorite('${item.url}')" title="播放" 
+                                style="background: none; border: none; color: white; cursor: pointer; padding: 5px;">
+                                ▶️
+                            </button>
+                            <button onclick="downloadFavorite('${item.url}')" title="下载" 
+                                style="background: none; border: none; color: white; cursor: pointer; padding: 5px;">
+                                ⬇️
+                            </button>
+                            <button onclick="removeFavorite(${index})" title="删除" 
+                                style="background: none; border: none; color: white; cursor: pointer; padding: 5px;">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                        listContainer.appendChild(favoriteItem);
+                    });
+                }
+
+                // 初始渲染
+                renderFavorites(favorites);
+
+                // 搜索功能
+                const searchInput = document.getElementById('favoriteSearch');
+                searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const filteredFavorites = favorites.filter(item =>
+                        item.title.toLowerCase().includes(searchTerm)
+                    );
+                    renderFavorites(filteredFavorites);
+                });
+
+                // 排序功能
+                const sortSelect = document.getElementById('sortFavorites');
+                sortSelect.addEventListener('change', (e) => {
+                    const sortedFavorites = [...favorites].sort((a, b) => {
+                        const dateA = new Date(a.date);
+                        const dateB = new Date(b.date);
+                        return e.target.value === 'newest' ?
+                            dateB - dateA : dateA - dateB;
+                    });
+                    renderFavorites(sortedFavorites);
+                });
+            }
+
+            // 下载收藏的视频
+            function downloadFavorite(url) {
+                window.open(url, '_blank');
+                showNotification('请在新窗口中右键保存视频');
+            }
+
+            // 获取相对时间
+            function getTimeAgo(date) {
+                const now = new Date();
+                const diffInSeconds = Math.floor((now - date) / 1000);
+
+                if (diffInSeconds < 60) return '刚刚';
+                if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + '分钟前';
+                if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + '小时前';
+                if (diffInSeconds < 2592000) return Math.floor(diffInSeconds / 86400) + '天前';
+                if (diffInSeconds < 31536000) return Math.floor(diffInSeconds / 2592000) + '个月前';
+                return Math.floor(diffInSeconds / 31536000) + '年前';
+            }
+
+            // 添加收藏样式
+            const style = document.createElement('style');
+            style.textContent = `
+            .favorite-item {
+                background: rgba(255, 255, 255, 0.1);
+                margin: 8px;
+                padding: 12px;
+                border-radius: 10px;
+                color: white;
+                display: flex;
+                align-items: center;
+                transition: all 0.3s ease;
+            }
+            
+            .favorite-item:hover {
+                background: rgba(255, 255, 255, 0.15);
+                transform: translateX(5px);
+            }
+
+            .favorite-title {
+                font-size: 12px;
+                margin-right: 10px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .favorite-buttons button:hover {
+                opacity: 0.8;
+                transform: scale(1.1);
+            }
+
+            #favoriteItemsContainer::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            #favoriteItemsContainer::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 5px;
+            }
+
+            #favoriteItemsContainer::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 5px;
+            }
+
+            #favoriteItemsContainer::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
+        `;
+            document.head.appendChild(style);
+
+            function switchToRandom() {
+                document.getElementById('randomVideoBtn').classList.add('active');
+                document.getElementById('showFavoriteListBtn').classList.remove('active');
+                favoriteList.classList.remove('show');
+                showNotification('切换到随机视频模式');
+                location.reload(); // 只在切换到随机视频时刷新页面
+            }
+
+            function switchToFavorites() {
+                document.getElementById('randomVideoBtn').classList.remove('active');
+                document.getElementById('showFavoriteListBtn').classList.add('active');
+                favoriteList.classList.add('show');
+                updateFavoriteList();
+                showNotification('打开收藏列表');
+                // 移除页面刷新
+            }
+
+            document.getElementById('downloadSideButton').onclick = () => {
+                // 获取当前正在播放的视频元素
+                const videoElement = document.querySelector('video');
+
+                if (videoElement && videoElement.src) {
+                    // 获取视频的URL
+                    const videoUrl = videoElement.src;
+
+                    // 直接在新窗口打开视频链接
+                    window.open(videoUrl, '_blank');
+
+                    showNotification('请在新窗口中右键保存视频');
+                } else {
+                    showNotification('未找到可下载的视频');
+                }
+            };
+
+            // 播放收藏的视频
+            function playFavorite(url) {
+                player.src = url;
+                currentVideoURL = url;
+                player.play();
+                favoriteList.classList.remove('show');
+                showNotification('正在播放收藏的视频！');
+                checkFavoriteStatus();
+            }
+
+            // 删除收藏
+            function removeFavorite(index) {
+                favorites.splice(index, 1);
+                localStorage.setItem('videoFavorites', JSON.stringify(favorites));
+                updateFavoriteList();
+                checkFavoriteStatus();
+                showNotification('已从收藏中移除！');
+            }
+
+            // 清空所有收藏
+            function clearAllFavorites() {
+                if (favorites.length === 0) {
+                    showNotification('收藏列表已经是空的了！');
+                    return;
+                }
+
+                if (confirm('确定要清空所有收藏吗？此操作不可恢复！')) {
+                    favorites = [];
+                    localStorage.setItem('videoFavorites', JSON.stringify(favorites));
+                    updateFavoriteList();
+                    checkFavoriteStatus();
+                    showNotification('已清空所有收藏！');
+                }
+            }
+
+            // 点击收藏列表外部关闭列表
+            document.addEventListener('click', (e) => {
+                // 检查点击的元素是否是删除按钮或其父元素
+                const isDeleteAction = e.target.closest('.favorite-buttons') !== null;
+
+                if (!favoriteList.contains(e.target) &&
+                    !showFavoriteListBtn.contains(e.target) &&
+                    !isDeleteAction &&
+                    favoriteList.classList.contains('show')) {
+                    favoriteList.classList.remove('show');
+                    // 切换回随机视频的激活状态
+                    document.getElementById('randomVideoBtn').classList.add('active');
+                    document.getElementById('showFavoriteListBtn').classList.remove('active');
+                }
+            });
+
+            // 修改 loadVideo 函数，添加检查收藏状态
+            const originalLoadVideo = loadVideo;
+            loadVideo = function (api) {
+                originalLoadVideo(api);
+                // 延迟检查收藏状态，确保视频已加载
+                setTimeout(checkFavoriteStatus, 1000);
+            }
+
+            // 初始化收藏按钮点击事件
+            document.getElementById('favoriteButton').onclick = handleFavorite;
+
+            // 初始化时检查收藏状态
+            setTimeout(checkFavoriteStatus, 1000);
+
+            // 添加动画样式
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = `
+            @keyframes starScatter {
+                0% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                }
+                50% {
+                    opacity: 0.6;
+                    transform: translate(calc(-50% + var(--tx) * 0.5), calc(-50% + var(--ty) * 0.5)) scale(0.6) rotate(180deg);
+                }
+                100% {
+                    opacity: 0;
+                    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0) rotate(360deg);
+                }
+            }
+
+            @keyframes starGather {
+                0% {
+                    opacity: 0;
+                    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0) rotate(0deg);
+                }
+                50% {
+                    opacity: 0.6;
+                    transform: translate(calc(-50% + var(--tx) * 0.5), calc(-50% + var(--ty) * 0.5)) scale(0.6) rotate(180deg);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1) rotate(360deg);
+                }
+            }
+
+            .likeEffect {
+                position: fixed;
+                pointer-events: none;
+                z-index: 9999;
+                transform-origin: center center;
+                transition: all 0.3s ease;
+            }
+
+            .likeEffect svg {
+                width: 35px;
+                height: 35px;
+                fill: #ffd700;
+                filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                will-change: transform, opacity;
+            }
+
+            .likeEffect > div {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                left: 0;
+                top: 0;
+                transform-origin: center center;
+            }
+
+            .likeEffect.scatter .star-1,
+            .likeEffect.scatter .star-2,
+            .likeEffect.scatter .star-3,
+            .likeEffect.scatter .star-4,
+            .likeEffect.scatter .star-5,
+            .likeEffect.scatter .star-6,
+            .likeEffect.scatter .star-7,
+            .likeEffect.scatter .star-8 {
+                animation: starScatter 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+
+            .likeEffect.gather .star-1,
+            .likeEffect.gather .star-2,
+            .likeEffect.gather .star-3,
+            .likeEffect.gather .star-4,
+            .likeEffect.gather .star-5,
+            .likeEffect.gather .star-6,
+            .likeEffect.gather .star-7,
+            .likeEffect.gather .star-8 {
+                animation: starGather 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+
+            .likeEffect.scatter .star-1 { animation-delay: 0s; }
+            .likeEffect.scatter .star-2 { animation-delay: 0.08s; }
+            .likeEffect.scatter .star-3 { animation-delay: 0.16s; }
+            .likeEffect.scatter .star-4 { animation-delay: 0.24s; }
+            .likeEffect.scatter .star-5 { animation-delay: 0.32s; }
+            .likeEffect.scatter .star-6 { animation-delay: 0.40s; }
+            .likeEffect.scatter .star-7 { animation-delay: 0.48s; }
+            .likeEffect.scatter .star-8 { animation-delay: 0.56s; }
+
+            .likeEffect.gather .star-1 { animation-delay: 0.56s; }
+            .likeEffect.gather .star-2 { animation-delay: 0.48s; }
+            .likeEffect.gather .star-3 { animation-delay: 0.40s; }
+            .likeEffect.gather .star-4 { animation-delay: 0.32s; }
+            .likeEffect.gather .star-5 { animation-delay: 0.24s; }
+            .likeEffect.gather .star-6 { animation-delay: 0.16s; }
+            .likeEffect.gather .star-7 { animation-delay: 0.08s; }
+            .likeEffect.gather .star-8 { animation-delay: 0s; }
+        `;
+            document.head.appendChild(styleSheet);
+
+            function toggleVideoTypePopup() {
+                const videoTypePopup = document.getElementById('videoTypePopup');
+                videoTypePopup.classList.toggle('show');
+            }
+
+            // 点击弹窗外部关闭弹窗
+            videoTypePopup.addEventListener('click', function (e) {
+                if (e.target === videoTypePopup) {
+                    toggleVideoTypePopup();
+                }
+            });
+
+            // 主题切换逻辑
+            const themeToggle = document.getElementById('themeToggle');
+            let currentTheme = 'default'; // 默认主题
+
+            themeToggle.onclick = () => {
+                if (currentTheme === 'default') {
+                    currentTheme = 'pink';
+                    themeToggle.innerText = '主题：粉色';
+                } else if (currentTheme === 'pink') {
+                    currentTheme = 'cyan';
+                    themeToggle.innerText = '主题：青色';
+                } else {
+                    currentTheme = 'default';
+                    themeToggle.innerText = '主题：默认';
+                }
+                updateTheme();
+            };
+
+            function updateTheme() {
+                // 移除所有主题类名
+                document.body.classList.remove('default', 'pink', 'cyan');
+                // 添加当前主题类名
+                document.body.classList.add(currentTheme);
+            }
+
+            // 页面加载时初始化默认主题
+            document.addEventListener('DOMContentLoaded', () => {
+                updateTheme();
+            });
+
+            // 添加样式以支持主题切换
+            if (!document.getElementById('themeStyles')) {
+                const styleSheet = document.createElement('style');
+                styleSheet.id = 'themeStyles';
+                styleSheet.textContent = `
+        /* 全局变量定义 */
+        :root {
+            --text-color-default: white;
+            --icon-color-default: black;
+            --background-color-default: white;
+
+            --text-color-pink: #ff69b4;
+            --icon-color-pink: #ff69b4;
+            --background-color-pink: #ffe6f2;
+
+            --text-color-cyan: #00bcd4;
+            --icon-color-cyan: #00bcd4;
+            --background-color-cyan: #e0f7fa;
+        }
+
+        /* 默认主题样式 */
+        body.default {
+            --text-color: var(--text-color-default);
+            --icon-color: var(--icon-color-default);
+            --background-color: var(--background-color-default);
+        }
+
+        /* 粉色主题样式 */
+        body.pink {
+            --text-color: var(--text-color-pink);
+            --icon-color: var(--icon-color-pink);
+            --background-color: var(--background-color-pink);
+        }
+
+        /* 青色主题样式 */
+        body.cyan {
+            --text-color: var(--text-color-cyan);
+            --icon-color: var(--icon-color-cyan);
+            --background-color: var(--background-color-cyan);
+        }
+
+        /* 应用全局变量 */
+        body {
+            color: var(--text-color); /* 全局文字颜色 */
+            background-color: var(--background-color); /* 全局背景色 */
+        }
+
+        svg path, svg text {
+            fill: var(--icon-color); /* 图标颜色 */
+        }
+
+        button, .typeButton {
+            color: var(--text-color); /* 按钮文字颜色 */
+            border-color: var(--text-color); /* 按钮边框颜色 */
+        }
+
+        /* 示例链接的颜色 */
+        a {
+            color: var(--text-color);
+            text-decoration: none;
+        }
+        a:hover {
+            color: var(--icon-color);
+        }
+    `;
+                document.head.appendChild(styleSheet);
+            }
+
+
+        </script>
+
+</body>
+
+</html>

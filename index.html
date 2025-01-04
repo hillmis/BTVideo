@@ -1101,7 +1101,7 @@
                 handleFavorite();
             }
 
-            // 单击与双击事件监听
+            // 统一双击逻辑
             videoPlayer.addEventListener('click', (event) => {
                 if (singleClickTimeout) {
                     clearTimeout(singleClickTimeout);

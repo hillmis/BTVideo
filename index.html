@@ -1115,21 +1115,14 @@
                 }
             });
 
-            // 触摸事件处理
-            let lastTouchTime = 0;
+            // 添加触摸事件处理
             videoPlayer.addEventListener('touchend', (event) => {
                 const now = Date.now();
                 if (now - lastTouchTime < 300) {
-                    const videoElement = document.querySelector('video');
-                    const videoUrl = videoElement?.src;
-                    const isCurrentlyFavorited = favorites.some(item => item.url === videoUrl);
-
-                    showLikeEffect(0, 0, isCurrentlyFavorited); // 坐标参数不再使用
-                    handleFavorite();
-                    lastTouchTime = 0;
-                } else {
-                    lastTouchTime = now;
+                    // 触发双击逻辑
+                    handleDoubleClick(event);
                 }
+                lastTouchTime = now;
             });
 
             // 自动隐藏按钮

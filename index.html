@@ -62,8 +62,9 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 100;
             opacity: 0;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
+            transition: opacity 0.3s ease;
             visibility: hidden;
+            will-change: opacity;
         }
 
         #popupContainer.show {
@@ -188,7 +189,6 @@
             margin: 10px 0;
             white-space: nowrap;
         }
-
 
         .menu-item {
             flex: 1;
@@ -520,8 +520,9 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 100;
             opacity: 0;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
+            transition: opacity 0.3s ease;
             visibility: hidden;
+            will-change: opacity;
         }
 
         #videoTypePopup.show {

@@ -62,6 +62,7 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 100;
             opacity: 0;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
             visibility: hidden;
             will-change: opacity, visibility;
         }
@@ -80,6 +81,7 @@
             gap: 10px;
             text-align: center;
             transform: translateY(-20px);
+            transition: transform 0.3s ease;
         }
 
         #popupContainer.show #popup {
@@ -524,6 +526,7 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 100;
             opacity: 0;
+
             visibility: hidden;
             will-change: opacity;
         }
@@ -542,6 +545,71 @@
             gap: 10px;
             text-align: center;
         }
+
+        /* 添加进度条样式 */
+        #progressContainer {
+            position: absolute;
+            bottom: 10px;
+            /* 距离底部10px */
+            left: 0;
+            /* 左对齐 */
+            width: 100%;
+            /* 进度条宽度为100% */
+            height: 3px;
+            /* 进度条高度 */
+            background-color: rgba(255, 255, 255, 0.3);
+            /* 背景色 */
+            border-radius: 10px;
+            /* 圆角 */
+            overflow: hidden;
+            /* 隐藏溢出部分 */
+        }
+
+        #progressBar {
+            height: 100%;
+            /* 进度条高度 */
+            background-color: var(--progress-bar-color-default);
+            /* 使用变量 */
+            /* 默认进度条颜色 */
+            width: 0%;
+            /* 初始宽度为0 */
+            transition: width 0.1s;
+            /* 动画效果 */
+        }
+
+        /* 全局变量定义 */
+        :root {
+            --text-color-default: white;
+            --icon-color-default: black;
+            --background-color-default: white;
+            --progress-bar-color-default: white;
+            /* 默认进度条颜色 */
+
+            --text-color-pink: #ff69b4;
+            --icon-color-pink: #ff69b4;
+            --background-color-pink: #ffe6f2;
+            --progress-bar-color-pink: #ff69b4;
+            /* 粉色主题进度条颜色 */
+
+            --text-color-cyan: #00bcd4;
+            --icon-color-cyan: #00bcd4;
+            --background-color-cyan: #e0f7fa;
+            --progress-bar-color-cyan: #00bcd4;
+            /* 青色主题进度条颜色 */
+        }
+
+        /* 应用全局变量 */
+        #progressBar {
+            height: 100%;
+            /* 进度条高度 */
+            background-color: var(--progress-bar-color-default);
+            /* 使用变量 */
+            /* 默认进度条颜色 */
+            width: 0%;
+            /* 初始宽度为0 */
+            transition: width 0.1s;
+            /* 动画效果 */
+        }
     </style>
 </head>
 
@@ -553,6 +621,9 @@
     <div id="videoContainer">
         <button id="nextVideoButton" data-hint="下一个视频来咯" style="display: none;">切换下一个视频</button>
         <video id="player" autoplay></video>
+        <div id="progressContainer">
+            <div id="progressBar"></div>
+        </div>
         <div id="videoTitle">
             <span id="randomVideoBtn" class="menu-item active" onclick="switchToRandom()">推荐</span>
             <span id="showFavoriteListBtn" class="menu-item" onclick="switchToFavorites()">收藏</span>
@@ -739,18 +810,17 @@
 
             // 修改loadVideo函数
             function loadVideo(api) {
-                document.getElementById('loadingAnimation').style.display = 'block';
                 player.src = `${api}&t=${Math.random()}`;
                 currentVideoURL = player.src;
 
                 player.onloadeddata = () => {
                     checkFavoriteStatus();
+                    updateProgressBar(); // 初始化进度条
                 };
 
                 player.onerror = () => {
                     console.error('Video loading error:', player.error);
                     currentVideoURL = '';
-                    document.getElementById('loadingAnimation').style.display = 'none';
                     showNotification('视频加载失败，尝试下一个...');
                     if (auto) {
                         setTimeout(() => loadVideo(api), 1000);
@@ -758,10 +828,81 @@
                 };
 
                 player.onloadedmetadata = () => {
-                    document.getElementById('loadingAnimation').style.display = 'none';
                     player.play();
                 };
             }
+
+            // 更新进度条
+            function updateProgressBar() {
+                const progressBar = document.getElementById('progressBar');
+                const duration = player.duration;
+
+                function update() {
+                    if (!isNaN(duration)) {
+                        const currentTime = player.currentTime;
+                        const percentage = (currentTime / duration) * 100;
+                        progressBar.style.width = percentage + '%';
+                    }
+                    requestAnimationFrame(update); // 使用 requestAnimationFrame 进行平滑更新
+                }
+
+                update(); // 启动更新循环
+
+                // 添加点击事件以控制视频播放时间
+                progressBar.parentElement.addEventListener('click', (event) => {
+                    const rect = progressBar.parentElement.getBoundingClientRect();
+                    const offsetX = event.clientX - rect.left; // 获取点击位置相对于进度条的偏移量
+                    const percentage = offsetX / rect.width; // 计算点击位置的百分比
+                    player.currentTime = percentage * duration; // 更新视频播放时间
+                });
+
+                // 添加拖动事件以控制视频播放时间
+                let isDragging = false;
+
+                const onMouseMove = (event) => {
+                    if (isDragging) {
+                        const rect = progressBar.parentElement.getBoundingClientRect();
+                        const offsetX = event.clientX - rect.left; // 获取拖动位置相对于进度条的偏移量
+                        const percentage = Math.min(Math.max(offsetX / rect.width, 0), 1); // 确保百分比在0到1之间
+                        player.currentTime = percentage * duration; // 更新视频播放时间
+                    }
+                };
+
+                const onMouseUp = () => {
+                    isDragging = false;
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                };
+
+                progressBar.parentElement.addEventListener('mousedown', (event) => {
+                    isDragging = true;
+                    onMouseMove(event); // 立即更新一次
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+
+                // 触摸事件处理
+                progressBar.parentElement.addEventListener('touchstart', (event) => {
+                    isDragging = true;
+                    onMouseMove(event.touches[0]); // 立即更新一次
+                });
+
+                progressBar.parentElement.addEventListener('touchmove', (event) => {
+                    if (isDragging) {
+                        onMouseMove(event.touches[0]);
+                    }
+                });
+
+                progressBar.parentElement.addEventListener('touchend', () => {
+                    isDragging = false;
+                });
+            }
+
+            // 确保进度条宽度随视频容器变化
+            window.addEventListener('resize', () => {
+                const progressContainer = document.getElementById('progressContainer');
+                progressContainer.style.width = document.getElementById('videoContainer').clientWidth + 'px';
+            });
 
             // 处理收藏功能
             function handleFavorite() {
@@ -900,20 +1041,6 @@
                 }
             });
 
-            // 长按事件
-            const longPressDuration = 600; // 长按时间（毫秒）
-
-            // 显示弹窗的函数
-            function showPopup() {
-                popupContainer.classList.add('show');
-            }
-
-            // 隐藏弹窗的函数
-            function hidePopup() {
-                popupContainer.classList.remove('show');
-            }
-
-
             // 监听整个文档的触摸移动事件，用于判断是否为有效滑动
             bind(document, 'touchmove', function (e) {
                 const touchMoveY = e.touches[0].screenY;
@@ -924,32 +1051,32 @@
                 }
             });
             // 触摸开始事件，设置长按计时器
-            document.addEventListener('touchstart', function (e) {
-                longPressTimer = setTimeout(showPopup, longPressDuration);
-            });
+            // document.addEventListener('touchstart', function (e) {
+            //     longPressTimer = setTimeout(showPopup, longPressDuration);
+            // });
 
             // 触摸结束事件，清除长按计时器
-            document.addEventListener('touchend', function () {
-                clearTimeout(longPressTimer);
-            });
+            // document.addEventListener('touchend', function () {
+            //     clearTimeout(longPressTimer);
+            // });
 
             // 触摸移动事件，如果用户移动手指，取消长按计时器
-            document.addEventListener('touchmove', function () {
-                clearTimeout(longPressTimer);
-            });
+            // document.addEventListener('touchmove', function () {
+            //     clearTimeout(longPressTimer);
+            // });
 
             // 鼠标长按支持（用于非触屏设备）
-            document.addEventListener('mousedown', function () {
-                longPressTimer = setTimeout(showPopup, longPressDuration);
-            });
+            // document.addEventListener('mousedown', function () {
+            //     longPressTimer = setTimeout(showPopup, longPressDuration);
+            // });
 
             // 鼠标松开或离开视频时清除计时器
-            document.addEventListener('mouseup', function () {
-                clearTimeout(longPressTimer);
-            });
-            document.addEventListener('mouseleave', function () {
-                clearTimeout(longPressTimer);
-            });
+            // document.addEventListener('mouseup', function () {
+            //     clearTimeout(longPressTimer);
+            // });
+            // document.addEventListener('mouseleave', function () {
+            //     clearTimeout(longPressTimer);
+            // });
 
             const sideButton = document.getElementById('sideButton');
             let buttonTimeout;
@@ -1584,6 +1711,16 @@
                 document.body.classList.remove('default', 'pink', 'cyan');
                 // 添加当前主题类名
                 document.body.classList.add(currentTheme);
+
+                // 更新进度条颜色
+                const progressBar = document.getElementById('progressBar');
+                if (currentTheme === 'pink') {
+                    progressBar.style.backgroundColor = 'var(--progress-bar-color-pink)';
+                } else if (currentTheme === 'cyan') {
+                    progressBar.style.backgroundColor = 'var(--progress-bar-color-cyan)';
+                } else {
+                    progressBar.style.backgroundColor = 'var(--progress-bar-color-default)';
+                }
             }
 
             // 页面加载时初始化默认主题
@@ -1663,5 +1800,12 @@
         </script>
 
 </body>
+
+</html>
+
+</html>
+</body>
+
+</html>
 
 </html>

@@ -523,10 +523,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0);
+            /* 修改为透明 */
             z-index: 100;
             opacity: 0;
-
             visibility: hidden;
             will-change: opacity;
         }
@@ -537,7 +537,7 @@
         }
 
         #videoTypeContent {
-            background: rgba(255, 255, 255, 0);
+            background: rgba(0, 0, 0, 0);
             padding: 20px;
             border-radius: 10px;
             display: grid;
@@ -644,10 +644,101 @@
         body.cyan #downloadSideButton {
             color: var(--icon-color-cyan);
         }
+
+        /* 广告弹窗样式 */
+        .ad-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0);
+            /* 修改此行以使遮罩透明 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+            /* 确保在视频上方 */
+            opacity: 0;
+            /* 初始透明度 */
+            visibility: hidden;
+            /* 初始隐藏 */
+            transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.5s ease;
+            transform: translateY(100%);
+            /* 初始位置在屏幕下方 */
+        }
+
+        .ad-popup.show {
+            opacity: 1;
+            /* 显示时的透明度 */
+            visibility: visible;
+            /* 显示时可见 */
+            transform: translateY(0);
+            /* 显示时回到正常位置 */
+        }
+
+        .ad-content {
+            background: rgba(255, 255, 255, 0);
+            /* 渐变背景 */
+            color: var(--text-color-default);
+            /* 使用全局变量 */
+            padding: 30px;
+            /* 增加内边距 */
+            border-radius: 15px;
+            /* 圆角 */
+            text-align: center;
+
+            max-width: 400px;
+            /* 最大宽度 */
+            width: 90%;
+            /* 自适应宽度 */
+        }
+
+        .ad-image {
+            width: 150px;
+            /* 固定宽度 */
+            height: 150px;
+            /* 固定高度，确保为正方形 */
+            border-radius: 10px;
+            /* 圆角 */
+            margin-bottom: 10px;
+            /* 底部间距 */
+        }
+
+        #closeAdPopup {
+            margin-top: 15px;
+            /* 增加顶部间距 */
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: rgb(255, 255, 255);
+            /* 白色字体 */
+            padding: 10px 15px;
+            /* 增加内边距 */
+            border-radius: 5px;
+            /* 圆角 */
+        }
     </style>
 </head>
 
 <body>
+    <!-- 添加透明遮罩 -->
+    <div id="overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0); z-index: 99;">
+    </div>
+    <!-- 广告弹窗 -->
+    <div id="adPopup" class="ad-popup">
+        <div class="ad-content">
+            <img src="https://s3.bmp.ovh/imgs/2024/09/08/1e157341b7c62420.jpg" alt="广告图像" class="ad-image">
+            <p>
+                <a href="https://s3.bmp.ovh/imgs/2024/09/08/1e157341b7c62420.jpg" target="_blank"
+                    style="color: var(--text-color-default);">
+                    点击这里了解更多信息！
+                </a>
+            </p>
+            <button id="closeAdPopup">3</button> <!-- 修改此行以显示初始倒计时 -->
+        </div>
+    </div>
     <div id="sideButton" onclick="togglePopup(true)">💠</div>
     <div id="favoriteButton" onclick="handleFavorite()">★</div>
     <div id="downloadSideButton">⬇</div>
@@ -822,6 +913,7 @@
             let auto = true; // 默认开启自动连播
             let currentVideoURL = ''; // 记录当前正在播放的视频URL
             let favorites = JSON.parse(localStorage.getItem('videoFavorites') || '[]');
+            let videoPlayCount = 0; // 初始化视频播放计数器
 
             // 定义 bind 函数用于添加事件监听器
             function bind(element, event, callback) {
@@ -850,6 +942,12 @@
                 player.onloadeddata = () => {
                     checkFavoriteStatus();
                     updateProgressBar(); // 初始化进度条
+                    videoPlayCount++; // 每次加载视频时增加计数器
+
+                    // 每播放10个视频显示广告
+                    if (videoPlayCount % 10 === 0) {
+                        showAdPopup(); // 显示广告
+                    }
                 };
 
                 player.onerror = () => {
@@ -1148,7 +1246,6 @@
                 "新的视频已经上线，快来观看吧！",
                 "记得点击自动连播按钮，让精彩不停歇！",
                 "点击屏幕右侧的按钮可以切换视频类型。",
-                "长按屏幕，也可以打开设置哦！",
                 "喜欢我们的平台吗？那就分享给身边的人吧！",
                 "需要帮助？点击屏幕右侧的设置按钮获取帮助。"
             ];
@@ -1316,9 +1413,19 @@
             // 显示/隐藏收藏列表
             showFavoriteListBtn.onclick = () => {
                 favoriteList.classList.toggle('show');
+                overlay.style.display = favoriteList.classList.contains('show') ? 'block' : 'none'; // 显示或隐藏遮罩
                 if (favoriteList.classList.contains('show')) {
                     updateFavoriteList();
                 }
+            };
+
+            // 点击遮罩关闭收藏列表
+            overlay.onclick = () => {
+                favoriteList.classList.remove('show');
+                overlay.style.display = 'none'; // 隐藏遮罩
+                // 切换回随机视频的激活状态
+                document.getElementById('randomVideoBtn').classList.add('active');
+                document.getElementById('showFavoriteListBtn').classList.remove('active');
             };
 
             // 更新收藏列表
@@ -1760,6 +1867,7 @@
             // 页面加载时初始化默认主题
             document.addEventListener('DOMContentLoaded', () => {
                 updateTheme();
+                loadVideo(currentAPI); // 添加此行以在页面加载时加载视频
             });
 
             // 添加样式以支持主题切换
@@ -1830,7 +1938,83 @@
                 document.head.appendChild(styleSheet);
             }
 
+            // 广告配置
+            const adConfigs = [
+                {
+                    imageUrl: "https://s3.bmp.ovh/imgs/2024/09/08/1e157341b7c62420.jpg",
+                    link: "https://s3.bmp.ovh/imgs/2024/09/08/1e157341b7c62420.jpg",
+                    countdown: 3, // 倒计时秒数
+                    message: "点击这里了解更多信息！"
+                },
+                {
+                    imageUrl: "https://example.com/new-ad-image.jpg", // 新广告的图片URL
+                    link: "https://example.com/new-ad-link", // 新广告的链接
+                    countdown: 5, // 新广告的倒计时秒数
+                    message: "查看我们的新产品！" // 新广告的消息
+                },
+                {
+                    imageUrl: "https://s3.bmp.ovh/imgs/2025/01/09/97585298ae433845.jpg", // 第三个广告的图片URL
+                    link: "https://example.com/ad3", // 第三个广告的链接
+                    countdown: 4, // 第三个广告的倒计时秒数
+                    message: "不要错过我们的特别优惠！" // 第三个广告的消息
+                },
+                {
+                    imageUrl: "https://example.com/ad4.jpg", // 第四个广告的图片URL
+                    link: "https://example.com/ad4", // 第四个广告的链接
+                    countdown: 6, // 第四个广告的倒计时秒数
+                    message: "立即注册，获取独家内容！" // 第四个广告的消息
+                },
+                {
+                    imageUrl: "https://example.com/ad5.jpg", // 第五个广告的图片URL
+                    link: "https://example.com/ad5", // 第五个广告的链接
+                    countdown: 3, // 第五个广告的倒计时秒数
+                    message: "加入我们的社区，享受更多福利！" // 第五个广告的消息
+                }
+            ];
 
+            let currentAdIndex = 0; // 当前广告索引
+
+            let isAdVisible = false; // 添加一个标志来跟踪广告是否可见
+
+            // 显示广告弹窗的函数
+            function showAdPopup() {
+                if (isAdVisible) return; // 如果广告已经可见，则不再显示
+
+                isAdVisible = true; // 设置广告为可见
+                const randomIndex = Math.floor(Math.random() * adConfigs.length); // 随机选择广告索引
+                const adConfig = adConfigs[randomIndex]; // 获取随机广告配置
+                const adPopup = document.getElementById('adPopup');
+                const closeAdPopup = document.getElementById('closeAdPopup');
+                const notificationButton = document.getElementById('notificationButton');
+
+                adPopup.classList.add('show'); // 添加显示类以触发动画
+                closeAdPopup.textContent = adConfig.countdown; // 设置初始倒计时文本
+                notificationButton.textContent = `广告在${adConfig.countdown}秒后可关闭`; // 更新通知按钮文本
+
+                let countdown = adConfig.countdown;
+                const adTimer = setInterval(() => {
+                    countdown--;
+                    closeAdPopup.textContent = countdown; // 更新按钮文本为当前倒计时
+                    notificationButton.textContent = `广告在${countdown}秒后可关闭`; // 更新通知按钮文本
+                    if (countdown <= 0) {
+                        clearInterval(adTimer);
+                        closeAdPopup.textContent = '×'; // 倒计时结束后显示关闭按钮
+                        updateNotification('广告已显示，请点击关闭按钮。'); // 更新通知
+                    }
+                }, 1000);
+
+                // 设置广告内容
+                document.querySelector('.ad-image').src = adConfig.imageUrl;
+                document.querySelector('.ad-content p a').href = adConfig.link;
+                document.querySelector('.ad-content p').textContent = adConfig.message;
+
+                closeAdPopup.onclick = function () {
+                    adPopup.classList.remove('show');
+                    clearInterval(adTimer);
+                    isAdVisible = false; // 广告关闭时重置标志
+                    updateNotification('广告已关闭。');
+                };
+            }
         </script>
 
 </body>

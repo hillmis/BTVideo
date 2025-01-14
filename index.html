@@ -1135,9 +1135,9 @@
             };
 
             // 显示切换按钮于桌面
-            if (window.innerWidth > 800) {
-                document.getElementById('nextVideoButton').style.display = 'block';
-            }
+            //if (window.innerWidth > 800) {
+            // document.getElementById('nextVideoButton').style.display = 'block';
+            //}
             const swipeThreshold = 50; // 滑动距离阈值，用于判断是否为有效滑动
 
             // 开始触摸，记录起始位置
@@ -2027,6 +2027,66 @@
                     updateNotification('广告已关闭。');
                 };
             }
+
+            //键盘控制
+            document.addEventListener("keydown", (event) => {
+                const player = document.getElementById("player");
+                const currentAPI = "http://www.yujn.cn/api/zzxjj.php?type=video"; // 替换为你的默认API
+                const videoTypes = Array.from(document.querySelectorAll(".typeButton")); // 获取所有类型按钮
+                let currentTypeIndex = videoTypes.findIndex(button => button.dataset.api === currentAPI);
+
+                switch (event.key) {
+                    case " ": // 空格键：播放或暂停
+                        event.preventDefault(); // 阻止页面向下滚动
+                        if (player.paused) {
+                            player.play();
+                        } else {
+                            player.pause();
+                        }
+                        break;
+
+                    case "ArrowRight": // 右箭头：快进5秒
+                        player.currentTime = Math.min(player.currentTime + 3, player.duration);
+                        break;
+
+                    case "ArrowLeft": // 左箭头：快退5秒
+                        player.currentTime = Math.max(player.currentTime - 3, 0);
+                        break;
+
+                    case "m": // 'm'键：切换静音状态
+                        player.muted = !player.muted;
+                        document.getElementById("muteButton").textContent = player.muted ? "静音：开" : "静音：关";
+                        break;
+
+                    case "f": // 'f'键：进入全屏模式
+                        if (player.requestFullscreen) {
+                            player.requestFullscreen();
+                        } else if (player.webkitRequestFullscreen) { // Safari支持
+                            player.webkitRequestFullscreen();
+                        } else if (player.msRequestFullscreen) { // IE支持
+                            player.msRequestFullscreen();
+                        }
+                        break;
+
+                    case "ArrowUp": // 上箭头：切换到上一个视频
+                        if (currentTypeIndex > 0) {
+                            currentTypeIndex--;
+                            loadVideo(videoTypes[currentTypeIndex].dataset.api);
+                        }
+                        break;
+
+                    case "ArrowDown": // 下箭头：切换到下一个视频
+                        if (currentTypeIndex < videoTypes.length - 1) {
+                            currentTypeIndex++;
+                            loadVideo(videoTypes[currentTypeIndex].dataset.api);
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+            });
+
         </script>
 
 </body>

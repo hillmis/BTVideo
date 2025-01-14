@@ -1128,6 +1128,9 @@
             document.getElementById('nextVideoButton').onclick = () => loadVideo(currentAPI);
 
             document.getElementById('randomVideoBtn').onclick = () => {
+                if (!player.paused) {
+                    player.pause(); // 确保在切换视频前暂停当前视频
+                }
                 location.reload();
             };
 
@@ -1972,19 +1975,31 @@
 
             let isAdVisible = false; // 添加一个标志来跟踪广告是否可见
 
+            let adDisplayTimeout; // 新增变量以控制广告显示时间
+
             // 显示广告弹窗的函数
             function showAdPopup() {
                 if (isAdVisible) return; // 如果广告已经可见，则不再显示
+                if (adDisplayTimeout) return; // 如果广告在显示时间内，则不再显示
 
                 isAdVisible = true; // 设置广告为可见
+                adDisplayTimeout = setTimeout(() => {
+                    isAdVisible = false; // 设置广告为不可见
+                    adDisplayTimeout = null; // 重置广告显示时间
+                }, 30000); // 30秒后允许再次显示广告
+
+                console.log("Attempting to show ad popup..."); // 调试信息
                 const randomIndex = Math.floor(Math.random() * adConfigs.length); // 随机选择广告索引
                 const adConfig = adConfigs[randomIndex]; // 获取随机广告配置
                 const adPopup = document.getElementById('adPopup');
                 const closeAdPopup = document.getElementById('closeAdPopup');
                 const notificationButton = document.getElementById('notificationButton');
 
+                console.log("Ad Config:", adConfig); // 输出广告配置以调试
+
                 adPopup.classList.add('show'); // 添加显示类以触发动画
                 closeAdPopup.textContent = adConfig.countdown; // 设置初始倒计时文本
+                closeAdPopup.disabled = true; // 禁用关闭按钮
                 notificationButton.textContent = `广告在${adConfig.countdown}秒后可关闭`; // 更新通知按钮文本
 
                 let countdown = adConfig.countdown;
@@ -1995,6 +2010,7 @@
                     if (countdown <= 0) {
                         clearInterval(adTimer);
                         closeAdPopup.textContent = '×'; // 倒计时结束后显示关闭按钮
+                        closeAdPopup.disabled = false; // 启用关闭按钮
                         updateNotification('广告已显示，请点击关闭按钮。'); // 更新通知
                     }
                 }, 1000);
@@ -2005,6 +2021,7 @@
                 document.querySelector('.ad-content p').textContent = adConfig.message;
 
                 closeAdPopup.onclick = function () {
+                    if (closeAdPopup.textContent !== '×') return; // 如果按钮不是关闭状态，则不执行
                     adPopup.classList.remove('show');
                     clearInterval(adTimer);
                     isAdVisible = false; // 广告关闭时重置标志
@@ -2014,5 +2031,7 @@
         </script>
 
 </body>
+
+</html>
 
 </html>

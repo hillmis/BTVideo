@@ -1125,17 +1125,9 @@
             }
 
             // 切换视频按钮（仅桌面）
-            document.getElementById('nextVideoButton').onclick = () => {
-                if (!player.paused) {
-                    player.pause(); // 确保在切换视频前暂停当前视频
-                }
-                loadVideo(currentAPI);
-            };
+            document.getElementById('nextVideoButton').onclick = () => loadVideo(currentAPI);
 
             document.getElementById('randomVideoBtn').onclick = () => {
-                if (!player.paused) {
-                    player.pause(); // 确保在切换视频前暂停当前视频
-                }
                 location.reload();
             };
 
@@ -1167,9 +1159,6 @@
                 }
             });
             function togglePopup(show) {
-                if (show) {
-                    player.pause(); // 在打开弹出窗口时暂停视频
-                }
                 popupContainer.classList.toggle('show', show);
             }
 
@@ -1985,7 +1974,6 @@
 
             // 显示广告弹窗的函数
             function showAdPopup() {
-                console.log("Attempting to show ad popup..."); // 调试信息
                 if (isAdVisible) return; // 如果广告已经可见，则不再显示
 
                 isAdVisible = true; // 设置广告为可见
@@ -1994,8 +1982,6 @@
                 const adPopup = document.getElementById('adPopup');
                 const closeAdPopup = document.getElementById('closeAdPopup');
                 const notificationButton = document.getElementById('notificationButton');
-
-                console.log("Ad Config:", adConfig); // 输出广告配置以调试
 
                 adPopup.classList.add('show'); // 添加显示类以触发动画
                 closeAdPopup.textContent = adConfig.countdown; // 设置初始倒计时文本
